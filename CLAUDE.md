@@ -70,4 +70,16 @@ recent linked here once it exists.
 > Created by splitting VPS-infra files out of `hermes_v2`. See
 > `docs/sessions/S1-HANDOFF.md` for what moved, what changed, and current live
 > state.
+
+> ## 🟢 S2 — GitHub remote + cloud-review docs (2026-08-22)
+> Created GitHub repo, added cloud-review setup documentation, scaffolding complete. See
+> `docs/sessions/S2-HANDOFF.md`.
+
+> ## 🟢 S3 — Server deployment complete (2026-08-22)
+> Deployed all 11 steps to Hetzner: cloned repo, systemd units, health-check tested, nginx cutover. Both projects verified healthy.
+> See `docs/sessions/S3-HANDOFF.md`.
+
+> ## 🟢 S4 — Git SSH + RemoteTrigger cloud-review (2026-08-22)
+> Fixed git SSH credentials (HTTPS → SSH), verified findings export pipeline, created two cloud-review routines (weekly + monthly). All automated reviews scheduled. See
+> `docs/sessions/S4-HANDOFF.md`.
 ---
