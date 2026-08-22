@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Hermes VPS monthly forensic audit (deep) — 1st of month, 04:15 UTC
+Documentation=https://github.com/jr-oaks1/Hermes-VPS
+
+[Timer]
+# 1st of every month, 04:15 UTC — 15min after the weekly quick check's slot,
+# so a monthly run never lands in the same window as the weekly one.
+OnCalendar=*-*-01 04:15
+Persistent=true
+AccuracySec=15min
+
+[Install]
+WantedBy=timers.target

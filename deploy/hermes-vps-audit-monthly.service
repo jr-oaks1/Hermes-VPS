@@ -1,0 +1,23 @@
+[Unit]
+Description=Hermes VPS Monthly Forensic Audit (deep)
+Documentation=https://github.com/jr-oaks1/Hermes-VPS
+After=network-online.target postgresql.service hermes_v2.service
+Wants=network-online.target
+PartOf=hermes-vps-audit-monthly.timer
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/hermes-vps
+EnvironmentFile=/opt/hermes_v2/.env
+EnvironmentFile=/root/.hermes_vps/.env
+ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_health_check.py --mode deep
+StandardOutput=append:/opt/hermes-vps/logs/hermes_vps_audit_monthly.log
+StandardError=append:/opt/hermes-vps/logs/hermes_vps_audit_monthly.log
+SupplementaryGroups=postgres
+PrivateTmp=true
+NoNewPrivileges=true
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

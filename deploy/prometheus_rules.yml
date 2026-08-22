@@ -1,0 +1,76 @@
+groups:
+  - name: cloudflare_tunnel
+    rules:
+      - alert: TunnelDown
+        expr: cloudflared_tunnel_ha_connections < 1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cloudflare tunnel has zero HA connections"
+          description: "cloudflared_tunnel_ha_connections = {{ $value }}. Tunnel is fully down — all traffic is blocked."
+
+      - alert: TunnelDegraded
+        expr: cloudflared_tunnel_ha_connections < 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cloudflare tunnel has fewer than 2 HA connections"
+          description: "cloudflared_tunnel_ha_connections = {{ $value }}. Redundancy lost — a single edge connection failure will drop the tunnel."
+
+      - alert: TunnelHighErrorRate
+        expr: rate(cloudflared_tunnel_request_errors[5m]) / (rate(cloudflared_tunnel_total_requests[5m]) + 0.001) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cloudflare tunnel error rate above 10%"
+          description: "Error rate = {{ $value | humanizePercentage }} over the last 5 minutes."
+
+  - name: hermes_v2_infra
+    rules:
+      - alert: AgentDown
+        expr: agent_health == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Hermes agent {{ $labels.agent_name }} is unhealthy"
+          description: "agent_health{agent_name='{{ $labels.agent_name }}'} has been 0 for 5+ minutes."
+
+      - alert: CircuitBreakerHalted
+        expr: circuit_breaker_state == 2
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Trading circuit breaker is HALTED"
+          description: "circuit_breaker_state = 2 (HALTED). All grid orders cancelled. Manual intervention required."
+
+      - alert: SSLCertExpiringSoon
+        expr: ssl_cert_days_remaining < 21
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "TLS certificate expiring in {{ $value | humanizeDuration }}"
+          description: "ssl_cert_days_remaining = {{ $value }}. certbot.timer should auto-renew — check if it's active."
+
+      - alert: SSLCertExpiryCritical
+        expr: ssl_cert_days_remaining < 7
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "TLS certificate expiring in less than 7 days"
+          description: "ssl_cert_days_remaining = {{ $value }}. Auto-renewal may have failed. Renew manually: certbot renew --force-renewal."
+
+      - alert: DiskUsageHigh
+        expr: disk_usage_percent > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk usage above 85%"
+          description: "disk_usage_percent = {{ $value }}%. TimescaleDB compression or log rotation may be needed."

@@ -1,0 +1,25 @@
+[Unit]
+Description=Prometheus metrics server (Hermes VPS host monitoring; scrapes hermes_v2's app metrics)
+After=network.target hermes_v2.service
+Wants=hermes_v2.service
+
+[Service]
+Type=simple
+User=prometheus
+Group=prometheus
+ExecStart=/usr/local/bin/prometheus \
+    --config.file=/opt/hermes-vps/deploy/prometheus.yml \
+    --storage.tsdb.path=/var/lib/prometheus \
+    --storage.tsdb.retention.time=90d \
+    --web.listen-address=127.0.0.1:9090 \
+    --web.enable-lifecycle
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=20
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/prometheus
+
+[Install]
+WantedBy=multi-user.target

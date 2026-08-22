@@ -1,0 +1,16 @@
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+11434                      ALLOW IN    172.17.0.0/16              # Docker bridge Ollama
+11434                      ALLOW IN    172.18.0.0/16              # Honcho Docker bridge to Ollama
+Anywhere on tailscale0     ALLOW IN    Anywhere                  
+41641/udp                  ALLOW IN    Anywhere                  
+2222 on eth0               DENY IN     Anywhere                  
+Anywhere (v6) on tailscale0 ALLOW IN    Anywhere (v6)             
+41641/udp (v6)             ALLOW IN    Anywhere (v6)             
+2222 (v6) on eth0          DENY IN     Anywhere (v6)             
+

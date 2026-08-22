@@ -1,0 +1,14 @@
+[Unit]
+Description=Run Hermes VPS weekly health check (quick) — Sunday 04:00 UTC
+Documentation=https://github.com/jr-oaks1/Hermes-VPS
+
+[Timer]
+# Sunday 04:00 UTC — after the 02:30 backup run and the 03:15/03:30 bronze-audit
+# timers, before any daily 04:xx work. Weekly cadence: quick checks (services,
+# /health, replication, ingestion freshness) don't need daily noise.
+OnCalendar=Sun *-*-* 04:00
+Persistent=true
+AccuracySec=15min
+
+[Install]
+WantedBy=timers.target

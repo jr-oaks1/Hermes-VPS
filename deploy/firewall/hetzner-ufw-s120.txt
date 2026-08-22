@@ -1,0 +1,60 @@
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+80                         ALLOW IN    173.245.48.0/20            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    173.245.48.0/20            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    103.21.244.0/22            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    103.21.244.0/22            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    103.22.200.0/22            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    103.22.200.0/22            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    103.31.4.0/22              # Cloudflare IPv4 HTTP
+443                        ALLOW IN    103.31.4.0/22              # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    141.101.64.0/18            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    141.101.64.0/18            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    108.162.192.0/18           # Cloudflare IPv4 HTTP
+443                        ALLOW IN    108.162.192.0/18           # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    190.93.240.0/20            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    190.93.240.0/20            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    188.114.96.0/20            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    188.114.96.0/20            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    197.234.240.0/22           # Cloudflare IPv4 HTTP
+443                        ALLOW IN    197.234.240.0/22           # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    198.41.128.0/17            # Cloudflare IPv4 HTTP
+443                        ALLOW IN    198.41.128.0/17            # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    162.158.0.0/15             # Cloudflare IPv4 HTTP
+443                        ALLOW IN    162.158.0.0/15             # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    104.16.0.0/13              # Cloudflare IPv4 HTTP
+443                        ALLOW IN    104.16.0.0/13              # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    104.24.0.0/14              # Cloudflare IPv4 HTTP
+443                        ALLOW IN    104.24.0.0/14              # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    172.64.0.0/13              # Cloudflare IPv4 HTTP
+443                        ALLOW IN    172.64.0.0/13              # Cloudflare IPv4 HTTPS
+80                         ALLOW IN    131.0.72.0/22              # Cloudflare IPv4 HTTP
+443                        ALLOW IN    131.0.72.0/22              # Cloudflare IPv4 HTTPS
+5432/tcp on docker0        ALLOW IN    Anywhere                   # Docker default bridge → PG
+5432/tcp on br-0a346d43d827 ALLOW IN    Anywhere                   # crypto_net bridge → PG
+Anywhere on tailscale0     ALLOW IN    Anywhere                  
+41641/udp                  ALLOW IN    Anywhere                  
+80                         ALLOW IN    2400:cb00::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2400:cb00::/32             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2606:4700::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2606:4700::/32             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2803:f800::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2803:f800::/32             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2405:b500::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2405:b500::/32             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2405:8100::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2405:8100::/32             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2a06:98c0::/29             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2a06:98c0::/29             # Cloudflare IPv6 HTTPS
+80                         ALLOW IN    2c0f:f248::/32             # Cloudflare IPv6 HTTP
+443                        ALLOW IN    2c0f:f248::/32             # Cloudflare IPv6 HTTPS
+5432/tcp (v6) on docker0   ALLOW IN    Anywhere (v6)              # Docker default bridge → PG
+5432/tcp (v6) on br-0a346d43d827 ALLOW IN    Anywhere (v6)              # crypto_net bridge → PG
+Anywhere (v6) on tailscale0 ALLOW IN    Anywhere (v6)             
+41641/udp (v6)             ALLOW IN    Anywhere (v6)             
+
