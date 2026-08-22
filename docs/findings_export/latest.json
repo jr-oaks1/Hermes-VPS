@@ -1,8 +1,68 @@
 {
-  "generated_at": "2026-08-22T14:12:01.318626+00:00",
+  "generated_at": "2026-08-22T14:43:52.879334+00:00",
   "mode": "quick",
   "window_days": 8,
   "hermes_vps_log": [
+    {
+      "id": 45,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 46,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 47,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 48,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 49,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 50,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
     {
       "id": 39,
       "ts": "2026-08-22T14:11:58.926675+00:00",
