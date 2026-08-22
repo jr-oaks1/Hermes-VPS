@@ -430,6 +430,38 @@ def main() -> int:
     session_ref = args.session_ref or f"vps-healthcheck-{args.mode}-{datetime.now(timezone.utc):%Y%m%d}"
     insert_findings(vps_log_db_url, session_ref, findings)
 
+    # Dual-write to unified findings DB (S6)
+    # Skip if FINDINGS_DB_URL not set (backward compatible with older deployments)
+    findings_db_url = os.environ.get("FINDINGS_DB_URL", "")
+    if findings_db_url:
+        import subprocess
+        for f in findings:
+            # Map severity for routing table compliance
+            # Only send CRITICAL/WARNING to Telegram (from log_operational_finding.py)
+            try:
+                cmd = [
+                    "/opt/hermes-vps/.venv/bin/python3", "/opt/jrvps-orchestrator/scripts/log_operational_finding.py",
+                    "--source_project", "JR Hermes VPS",
+                    "--severity", f.severity,
+                    "--category", f.category,
+                    "--summary", f.summary,
+                ]
+                if f.detail:
+                    cmd.extend(["--detail", f.detail])
+                if session_ref:
+                    cmd.extend(["--session", session_ref])
+
+                # Skip Telegram if INFO (only CRITICAL/WARNING alert)
+                if f.severity == "info":
+                    cmd.append("--no-telegram")
+
+                subprocess.run(cmd, check=False, timeout=30)
+            except Exception as e:
+                print(f"warning: dual-write to unified DB failed for finding '{f.summary}': {e}", file=sys.stderr)
+    else:
+        if findings:  # Only log if there are findings to write
+            print("warning: FINDINGS_DB_URL not set — unified DB logging skipped", file=sys.stderr)
+
     for f in findings:
         print(f"[{f.severity.upper()}] {f.category}.{f.summary}" + (f" — {f.detail}" if f.detail else ""))
 
