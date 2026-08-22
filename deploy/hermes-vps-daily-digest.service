@@ -1,0 +1,25 @@
+[Unit]
+Description=JR Hermes VPS — Daily operational digest
+After=network.target
+ConditionPathExists=/opt/hermes-vps
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/hermes-vps
+
+# Load environment from .env files (primary: vps, secondary: hermes_v2 for any cross-reads)
+EnvironmentFile=/root/.hermes_vps/.env
+EnvironmentFile=-/opt/hermes_v2/.env
+
+ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_daily_digest.py
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hermes-vps-daily-digest
+
+# Restart on transient failure, but not on script exit codes
+Restart=on-failure
+RestartForceExitStatus=2 3
+RestartMaxAttempts=2
+RestartSec=30
