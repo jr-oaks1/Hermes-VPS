@@ -13,3 +13,7 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Credentials — NEVER commit to git
+/root/.hermes_vps_credentials/
+.env
