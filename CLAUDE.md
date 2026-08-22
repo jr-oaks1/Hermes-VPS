@@ -83,9 +83,6 @@ recent linked here once it exists.
 > Fixed git SSH credentials (HTTPS → SSH), verified findings export pipeline, created two cloud-review routines (weekly + monthly). All automated reviews scheduled. See
 > `docs/sessions/S4-HANDOFF.md`.
 
-> ## 🟢 S5 — Operational framework design (2026-08-22)
-> Coordinated with Clevious VPS S38, designed three-tier operations structure (CEO/GM, Ops Manager, Branch Managers). Created 5 workspace-wide documentation files defining roles, audit schedule, Telegram routing, continuous-improvement cycle, and SQL templates. Deferred infrastructure deployment to S6. See `docs/sessions/S5-HANDOFF.md`.
-
-> ## 🟢 S6 — Unified findings database operational (2026-08-22)
-> **COMPLETE** — Deployed vps_orchestrator_findings DB, dual-write logging, script integration. All 4 S5 checklist items executed. End-to-end verification passed: 7 findings successfully logged to both unified and project-local DBs. Both systemd timers verified (weekly Sun 04:00, monthly Tue 04:15 UTC). Ready for Sept 1 synthesis meeting. See `docs/sessions/S6-HANDOFF.md`.
+> ## 🟢 S05 — Operational framework design + unified findings DB deployment (2026-08-22)
+> Two phases: (1) Designed three-tier operations structure coordinated with Clevious VPS; created 5 workspace-wide docs (roles, audit schedule, Telegram routing, continuous-improvement, SQL templates). (2) Deployed vps_orchestrator_findings DB on Hetzner, dual-write logging, log_operational_finding.py script. End-to-end verified: 7 findings logged to both DBs; systemd timers active (weekly Sun 04:00, monthly 1st 04:15 UTC). Ready for Sept 1 synthesis meeting. See `docs/sessions/S05-HANDOFF.md` and `docs/sessions/S5-HANDOFF.md` (framework design phase).
 ---
