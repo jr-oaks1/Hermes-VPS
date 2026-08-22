@@ -18,8 +18,5 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=hermes-vps-daily-digest
 
-# Restart on transient failure, but not on script exit codes
-Restart=on-failure
-RestartForceExitStatus=2 3
-RestartMaxAttempts=2
-RestartSec=30
+# Don't restart oneshot services; errors are logged and can be checked via journalctl
+Restart=no
