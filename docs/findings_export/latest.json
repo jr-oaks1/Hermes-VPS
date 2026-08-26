@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-08-26T11:34:18.368686+00:00",
+  "generated_at": "2026-08-26T12:59:19.558718+00:00",
   "mode": "quick",
   "window_days": 8,
   "hermes_vps_log": [
     {
-      "id": 87,
-      "ts": "2026-08-26T11:34:14.383564+00:00",
-      "session_ref": "vps-healthcheck-quick-20260826",
+      "id": 99,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
       "category": "finding",
       "severity": "info",
       "summary": "service.hermes_v2: active",
@@ -14,29 +14,29 @@
       "source": "hermes-vps"
     },
     {
-      "id": 92,
-      "ts": "2026-08-26T11:34:14.383564+00:00",
-      "session_ref": "vps-healthcheck-quick-20260826",
+      "id": 100,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
       "category": "finding",
       "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 91,
-      "ts": "2026-08-26T11:34:14.383564+00:00",
-      "session_ref": "vps-healthcheck-quick-20260826",
+      "id": 101,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
       "category": "finding",
       "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 90,
-      "ts": "2026-08-26T11:34:14.383564+00:00",
-      "session_ref": "vps-healthcheck-quick-20260826",
+      "id": 102,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
       "category": "finding",
       "severity": "info",
       "summary": "api.health: ok (20 agents)",
@@ -44,12 +44,92 @@
       "source": "hermes-vps"
     },
     {
-      "id": 89,
+      "id": 103,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 104,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 93,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 94,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 95,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 96,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting'}",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 97,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "error",
+      "severity": "critical",
+      "summary": "replication: check failed",
+      "detail": "connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nMultiple connection attempts failed. All failures were:\n- host: 'localhost', port: '5432', hostaddr: '::1': connection failed: connection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\n- host: 'localhost', port: '5432', hostaddr: '127.0.0.1': connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 98,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "error",
+      "severity": "critical",
+      "summary": "ingestion.ohlcv_1m: check failed",
+      "detail": "connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nMultiple connection attempts failed. All failures were:\n- host: 'localhost', port: '5432', hostaddr: '::1': connection failed: connection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\n- host: 'localhost', port: '5432', hostaddr: '127.0.0.1': connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 87,
       "ts": "2026-08-26T11:34:14.383564+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
+      "summary": "service.hermes_v2: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -64,18 +144,38 @@
       "source": "hermes-vps"
     },
     {
-      "id": 82,
-      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "id": 89,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
       "category": "finding",
       "severity": "info",
-      "summary": "service.nginx: active",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 86,
-      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "id": 90,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 91,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 92,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
       "category": "finding",
       "severity": "info",
@@ -84,22 +184,22 @@
       "source": "hermes-vps"
     },
     {
-      "id": 85,
+      "id": 81,
       "ts": "2026-08-26T11:30:14.164468+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
       "category": "finding",
       "severity": "info",
-      "summary": "replication: 1 standby(s), 7408 bytes max lag",
+      "summary": "service.hermes_v2: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 84,
+      "id": 82,
       "ts": "2026-08-26T11:30:14.164468+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
       "category": "finding",
       "severity": "info",
-      "summary": "api.health: ok (20 agents)",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -114,9 +214,39 @@
       "source": "hermes-vps"
     },
     {
-      "id": 81,
+      "id": 84,
       "ts": "2026-08-26T11:30:14.164468+00:00",
       "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 85,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 7408 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 86,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 75,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
       "category": "finding",
       "severity": "info",
       "summary": "service.hermes_v2: active",
@@ -134,22 +264,12 @@
       "source": "hermes-vps"
     },
     {
-      "id": 80,
+      "id": 77,
       "ts": "2026-08-23T04:00:02.363839+00:00",
       "session_ref": "vps-healthcheck-quick-20260823",
       "category": "finding",
       "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 79,
-      "ts": "2026-08-23T04:00:02.363839+00:00",
-      "session_ref": "vps-healthcheck-quick-20260823",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -164,49 +284,9 @@
       "source": "hermes-vps"
     },
     {
-      "id": 77,
+      "id": 79,
       "ts": "2026-08-23T04:00:02.363839+00:00",
       "session_ref": "vps-healthcheck-quick-20260823",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.postgresql: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 75,
-      "ts": "2026-08-23T04:00:02.363839+00:00",
-      "session_ref": "vps-healthcheck-quick-20260823",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.hermes_v2: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 72,
-      "ts": "2026-08-22T16:01:27.667521+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "api.health: ok (20 agents)",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 74,
-      "ts": "2026-08-22T16:01:27.667521+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 73,
-      "ts": "2026-08-22T16:01:27.667521+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "replication: 1 standby(s), 0 bytes max lag",
@@ -214,22 +294,12 @@
       "source": "hermes-vps"
     },
     {
-      "id": 71,
-      "ts": "2026-08-22T16:01:27.667521+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
+      "id": 80,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 70,
-      "ts": "2026-08-22T16:01:27.667521+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.nginx: active",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -244,38 +314,28 @@
       "source": "hermes-vps"
     },
     {
-      "id": 63,
-      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "id": 70,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.hermes_v2: active",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 68,
-      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "id": 71,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 67,
-      "ts": "2026-08-22T16:01:02.542576+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 66,
-      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "id": 72,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
@@ -284,12 +344,32 @@
       "source": "hermes-vps"
     },
     {
-      "id": 65,
+      "id": 73,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 74,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 63,
       "ts": "2026-08-22T16:01:02.542576+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
+      "summary": "service.hermes_v2: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -304,38 +384,18 @@
       "source": "hermes-vps"
     },
     {
-      "id": 58,
-      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "id": 65,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.nginx: active",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 62,
-      "ts": "2026-08-22T16:00:01.445430+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 61,
-      "ts": "2026-08-22T16:00:01.445430+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 60,
-      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "id": 66,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
@@ -344,12 +404,22 @@
       "source": "hermes-vps"
     },
     {
-      "id": 59,
-      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "id": 67,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 68,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -364,8 +434,18 @@
       "source": "hermes-vps"
     },
     {
-      "id": 53,
-      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "id": 58,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 59,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
@@ -374,22 +454,32 @@
       "source": "hermes-vps"
     },
     {
-      "id": 56,
-      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "id": 60,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "summary": "api.health: ok (20 agents)",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 55,
-      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "id": 61,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 62,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -404,16 +494,6 @@
       "source": "hermes-vps"
     },
     {
-      "id": 54,
-      "ts": "2026-08-22T14:44:28.215266+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "api.health: ok (20 agents)",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
       "id": 52,
       "ts": "2026-08-22T14:44:28.215266+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
@@ -424,12 +504,42 @@
       "source": "hermes-vps"
     },
     {
-      "id": 47,
-      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "id": 53,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 54,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 55,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 56,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -450,6 +560,16 @@
       "category": "finding",
       "severity": "info",
       "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 47,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -494,32 +614,12 @@
       "source": "hermes-vps"
     },
     {
-      "id": 44,
+      "id": 40,
       "ts": "2026-08-22T14:11:58.926675+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 43,
-      "ts": "2026-08-22T14:11:58.926675+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 42,
-      "ts": "2026-08-22T14:11:58.926675+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "api.health: ok (20 agents)",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -534,48 +634,8 @@
       "source": "hermes-vps"
     },
     {
-      "id": 40,
+      "id": 42,
       "ts": "2026-08-22T14:11:58.926675+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.nginx: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 34,
-      "ts": "2026-08-22T11:28:44.996761+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.nginx: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 38,
-      "ts": "2026-08-22T11:28:44.996761+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 37,
-      "ts": "2026-08-22T11:28:44.996761+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 0 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 36,
-      "ts": "2026-08-22T11:28:44.996761+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
@@ -584,12 +644,22 @@
       "source": "hermes-vps"
     },
     {
-      "id": 35,
-      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "id": 43,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 44,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -604,89 +674,19 @@
       "source": "hermes-vps"
     },
     {
-      "id": 28,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
+      "id": 34,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "backups.hermes_v2: newest is 8.1h old",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 32,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "git: in sync with origin/main (b8947c7)",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 31,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "tls: expires in 58d",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 30,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "warning",
-      "summary": "backups.hermes_vps_log: no dump found yet in /opt/backups/hermes_vps_log",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 29,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "backups.hermes_v2_log: newest is 8.1h old",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 27,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 26,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 3352 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 25,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
-      "category": "finding",
-      "severity": "warning",
-      "summary": "api.health: degraded",
-      "detail": "unhealthy agents: {'onchain_data': 'starting'}",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 24,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
+      "id": 35,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "service.postgresql: active",
@@ -694,12 +694,32 @@
       "source": "hermes-vps"
     },
     {
-      "id": 23,
-      "ts": "2026-08-22T10:50:57.321332+00:00",
-      "session_ref": "vps-healthcheck-deep-20260822",
+      "id": 36,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.nginx: active",
+      "summary": "api.health: ok (20 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 37,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 38,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -714,19 +734,49 @@
       "source": "hermes-vps"
     },
     {
-      "id": 16,
-      "ts": "2026-08-22T10:50:36.386617+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
+      "id": 23,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.hermes_v2: active",
+      "summary": "service.nginx: active",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 21,
-      "ts": "2026-08-22T10:50:36.386617+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
+      "id": 24,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 25,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting'}",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 26,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 3352 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 27,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "ingestion.ohlcv_1m: 11 symbols current",
@@ -734,32 +784,62 @@
       "source": "hermes-vps"
     },
     {
-      "id": 20,
-      "ts": "2026-08-22T10:50:36.386617+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
+      "id": 28,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "replication: 1 standby(s), 45512 bytes max lag",
+      "summary": "backups.hermes_v2: newest is 8.1h old",
       "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 19,
-      "ts": "2026-08-22T10:50:36.386617+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
+      "id": 29,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
       "category": "finding",
-      "severity": "warning",
-      "summary": "api.health: degraded",
-      "detail": "unhealthy agents: {'onchain_data': 'starting', 'fred_data': 'starting'}",
+      "severity": "info",
+      "summary": "backups.hermes_v2_log: newest is 8.1h old",
+      "detail": null,
       "source": "hermes-vps"
     },
     {
-      "id": 18,
+      "id": 30,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "backups.hermes_vps_log: no dump found yet in /opt/backups/hermes_vps_log",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 31,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "tls: expires in 58d",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 32,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "git: in sync with origin/main (b8947c7)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 16,
       "ts": "2026-08-22T10:50:36.386617+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
-      "summary": "service.postgresql: active",
+      "summary": "service.hermes_v2: active",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -774,52 +854,42 @@
       "source": "hermes-vps"
     },
     {
-      "id": 11,
-      "ts": "2026-08-22T10:49:24.836710+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "service.nginx: active",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 15,
-      "ts": "2026-08-22T10:49:24.836710+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 14,
-      "ts": "2026-08-22T10:49:24.836710+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "info",
-      "summary": "replication: 1 standby(s), 29600 bytes max lag",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 13,
-      "ts": "2026-08-22T10:49:24.836710+00:00",
-      "session_ref": "vps-healthcheck-quick-20260822",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: degraded",
-      "detail": "unhealthy agents: {'macro_data': 'starting', 'onchain_data': 'starting', 'fred_data': 'starting'}",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 12,
-      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "id": 18,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
       "session_ref": "vps-healthcheck-quick-20260822",
       "category": "finding",
       "severity": "info",
       "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 19,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting', 'fred_data': 'starting'}",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 20,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 45512 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 21,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -834,6 +904,56 @@
       "source": "hermes-vps"
     },
     {
+      "id": 11,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 12,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 13,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'macro_data': 'starting', 'onchain_data': 'starting', 'fred_data': 'starting'}",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 14,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 29600 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 15,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
       "id": 1,
       "ts": "2026-08-22T08:26:32.569877+00:00",
       "session_ref": "S178",
@@ -841,46 +961,6 @@
       "severity": "info",
       "summary": "VPS diagnostic: all systemd services healthy",
       "detail": "hermes_v2.service active/running (restarted 07:45:12 UTC), nginx active 24h, postgresql active. Load avg 2.90, memory 29% used (2.1/7.6GB), disk 48% used (35/75GB), swap negligible (40MB/9GB). Uptime 9 days.",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 9,
-      "ts": "2026-08-22T08:26:32.569877+00:00",
-      "session_ref": "S178",
-      "category": "note",
-      "severity": "info",
-      "summary": "Git repo clean and in sync",
-      "detail": "Branch main, working tree clean, HEAD=9835c9b (S177: TradingView integration discontinued), local matches origin/main exactly.",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 8,
-      "ts": "2026-08-22T08:26:32.569877+00:00",
-      "session_ref": "S178",
-      "category": "note",
-      "severity": "info",
-      "summary": "API security posture confirmed healthy",
-      "detail": "Nginx rate-limiting (zone api_general) actively blocking bot scan traffic (WordPress/PHP exploit probes from 93.123.109.95, 20+ req/burst). API layer correctly returns 401 for all unauthenticated bot payloads. No successful unauthorized access observed in logs.",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 3,
-      "ts": "2026-08-22T08:26:32.569877+00:00",
-      "session_ref": "S178",
-      "category": "note",
-      "severity": "info",
-      "summary": "Ingestion pipeline current for active symbols",
-      "detail": "BTC/ETH/BNB/SOL/XRP/ADA/AVAX/DOGE/BCH/PAXG/ONDO all updated to 2026-08-22 08:03:00 UTC. All 16 active agents report healthy via /health endpoint; 3 role_excluded as expected (training/audit/reporting on HERMES_ROLE=ingestion).",
-      "source": "hermes-vps"
-    },
-    {
-      "id": 7,
-      "ts": "2026-08-22T08:26:32.569877+00:00",
-      "session_ref": "S178",
-      "category": "note",
-      "severity": "info",
-      "summary": "Backups and TLS certificate current",
-      "detail": "hermes_v2 DB backup last ran 2026-08-22 02:42 UTC; hermes_v2_log backup 01:34 UTC. /etc/pg_backup.conf registered both databases correctly, remote dest Contabo 100.121.245.4, retention 2 local/7 remote. TLS cert (artek-studio.com) valid until 2026-10-19 (91 days remaining), auto-renews via certbot.timer + dns-01/Cloudflare.",
       "source": "hermes-vps"
     },
     {
@@ -894,13 +974,23 @@
       "source": "hermes-vps"
     },
     {
-      "id": 6,
+      "id": 3,
       "ts": "2026-08-22T08:26:32.569877+00:00",
       "session_ref": "S178",
       "category": "note",
       "severity": "info",
-      "summary": "hermes_v2 service restart at 07:45:12 UTC investigated - benign",
-      "detail": "Clean systemd stop/start (not a crash - no failure exit codes, no OOM). Immediately preceded by a brief root SSH session (100.113.177.23 via Tailscale, 07:44:22-07:44:25 UTC, ~3sec). Consistent with a manual `systemctl restart hermes_v2` or short-lived deploy script. Not investigated further as low-risk.",
+      "summary": "Ingestion pipeline current for active symbols",
+      "detail": "BTC/ETH/BNB/SOL/XRP/ADA/AVAX/DOGE/BCH/PAXG/ONDO all updated to 2026-08-22 08:03:00 UTC. All 16 active agents report healthy via /health endpoint; 3 role_excluded as expected (training/audit/reporting on HERMES_ROLE=ingestion).",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 4,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "7 deprecated symbols stale in ohlcv_1m since S79 drop",
+      "detail": "TRX, DOT, LINK, TON, ICP, LTC, UNI last updated 2026-06-27 22:47 UTC (56 days stale). SHIB stale since 2026-06-03, NEXO since 2026-05-15. Non-blocking \u2014 disk usage healthy at 48%. Candidate for archival/pruning if space becomes constrained.",
       "source": "hermes-vps"
     },
     {
@@ -914,13 +1004,43 @@
       "source": "hermes-vps"
     },
     {
-      "id": 4,
+      "id": 6,
       "ts": "2026-08-22T08:26:32.569877+00:00",
       "session_ref": "S178",
-      "category": "finding",
-      "severity": "warning",
-      "summary": "7 deprecated symbols stale in ohlcv_1m since S79 drop",
-      "detail": "TRX, DOT, LINK, TON, ICP, LTC, UNI last updated 2026-06-27 22:47 UTC (56 days stale). SHIB stale since 2026-06-03, NEXO since 2026-05-15. Non-blocking \u2014 disk usage healthy at 48%. Candidate for archival/pruning if space becomes constrained.",
+      "category": "note",
+      "severity": "info",
+      "summary": "hermes_v2 service restart at 07:45:12 UTC investigated - benign",
+      "detail": "Clean systemd stop/start (not a crash - no failure exit codes, no OOM). Immediately preceded by a brief root SSH session (100.113.177.23 via Tailscale, 07:44:22-07:44:25 UTC, ~3sec). Consistent with a manual `systemctl restart hermes_v2` or short-lived deploy script. Not investigated further as low-risk.",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 7,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Backups and TLS certificate current",
+      "detail": "hermes_v2 DB backup last ran 2026-08-22 02:42 UTC; hermes_v2_log backup 01:34 UTC. /etc/pg_backup.conf registered both databases correctly, remote dest Contabo 100.121.245.4, retention 2 local/7 remote. TLS cert (artek-studio.com) valid until 2026-10-19 (91 days remaining), auto-renews via certbot.timer + dns-01/Cloudflare.",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 8,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "API security posture confirmed healthy",
+      "detail": "Nginx rate-limiting (zone api_general) actively blocking bot scan traffic (WordPress/PHP exploit probes from 93.123.109.95, 20+ req/burst). API layer correctly returns 401 for all unauthenticated bot payloads. No successful unauthorized access observed in logs.",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 9,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Git repo clean and in sync",
+      "detail": "Branch main, working tree clean, HEAD=9835c9b (S177: TradingView integration discontinued), local matches origin/main exactly.",
       "source": "hermes-vps"
     }
   ]
