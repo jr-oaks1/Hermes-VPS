@@ -91,4 +91,10 @@ recent linked here once it exists.
 
 > ## 🟡 S07 — Credentials exposure remediated + vault onboarding (2026-08-26)
 > Verified daily-digest/weekly-check automation healthy. Found and fixed a real incident while onboarding this project into the workspace's new credentials vault: Telegram bot token, DB passwords (including a cross-project hermes_v2 one), and the Grafana password were committed in plaintext to this project's **public** GitHub repo. Redacted (commit `e49ca82`) and rotated this project's own two secrets; hermes_v2's exposed passwords flagged for a session scoped there instead. Bonus fix: server's git clone had silently diverged from `origin/main` since ~S06 — reset and reconciled. Added `_credentials/jr_hermes_vps/` scaffolding. **Telegram token rotation still pending user's @BotFather action** — see `docs/sessions/S07-HANDOFF.md`. Not the "post-synthesis" S07 originally planned in S06 — that still waits for Sept 1.
+
+> ## 🟢 S08 — Closed all four S07 pendings (2026-08-26)
+> hermes_v2's DATABASE_URL/HERMES_LOG_DB_URL rotated cross-project (self-corrected a ~7-min outage mid-rotation); found and fixed a stale duplicate DATABASE_URL in this project's own `.env`; `@jr_crypto_knife_bot` mystery confirmed resolved (hermes_v2's own legacy bot); two vault items staged for Jorge. See `docs/sessions/S08-HANDOFF.md`.
+
+> ## 🟢 S09 — hermes_v2 → JR Hermes Ingestor split (redirected session, 2026-08-26)
+> Session opened here but redirected by the user to a larger cross-project task: split `hermes_v2` into a new standalone project, `JR Hermes Ingestor` (local repo + GitHub remote, no server deployment). `hermes_v2` archived in full to `_archive/hermes_v2-pre-ingestor-split/`. Nothing changed in JR Hermes VPS itself — this project's `/opt/hermes_v2` cross-read stays valid until Ingestor's own server deployment happens. Full split detail lives in JR Hermes Ingestor's own `docs/sessions/01-10/S1-HANDOFF.md`. See `docs/sessions/S09-HANDOFF.md`.
 ---
