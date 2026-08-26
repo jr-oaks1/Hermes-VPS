@@ -74,10 +74,34 @@ prompted the vault's creation.
   generate a fresh value whenever it actually gets deployed instead of reusing the
   exposed one.
 
-**Rotation pending (needs your action):** `TELEGRAM_BOT_TOKEN` for `@JRHermesVPSBot` —
-revoke/reissue via @BotFather (`/mybots` → `@JRHermesVPSBot` → API Token → Revoke).
-Once you have the new token, it needs to land in `/root/.hermes_vps/.env` on the
-server and in the new vault entry (item 4) — not yet done as of this handoff.
+**`TELEGRAM_BOT_TOKEN` rotation: done.** User revoked/reissued via @BotFather same
+session. New value applied to `/root/.hermes_vps/.env` and
+`/root/.hermes_vps_credentials/CREDENTIALS.md` (the latter stores it as a table row,
+not `KEY=value` — first sed pass missed it, caught and fixed same session). Verified
+live: manual digest run delivered successfully with the new token
+(`hermes-vps-daily-digest.service`, exit 0, "digest sent"). Open follow-up: `hermes_v2/`'s
+encrypted vault entry may hold a duplicate of this token (flagged, unconfirmed) — if
+so it's now stale and needs the same update; only Jorge can check/fix an encrypted
+vault entry.
+
+**Bot-identity scare during rotation (resolved for this project):** right after
+rotating, Jorge noticed the daily-digest messages appeared to be landing in a
+Telegram chat labeled `@jr_crypto_knife_bot` ("CryptoKnifeBot"), not `@JRHermesVPSBot`.
+Investigated live:
+- `getMe` against the new token confirmed bot id `8832352276`, username
+  `JRHermesVPSBot` — Telegram's own authoritative record.
+- A distinctly-worded confirmation message sent via that same token (`sendMessage`,
+  message id `394`) landed correctly in the **`JR_HermesVPS` bot thread** — alongside
+  the existing weekly-health-check confirmations and daily digests, all present and
+  correctly attributed. Confirmed by Jorge via screenshot.
+- **Conclusion: this project's bot config is correct and verified end-to-end.** The
+  `CryptoKnifeBot` thread showing similar-looking "JR Hermes VPS: X findings" content
+  is a separate, unexplained thread — plausibly a different project's own automation
+  reading the same shared `vps_orchestrator_findings` table (this is inference, not
+  confirmed; `JR_VPS_Orchestrators` is the most likely candidate given it's documented
+  as coordinating on that same shared table, but this wasn't investigated further).
+  Per Jorge's instruction, left open for him to check against other projects rather
+  than digging further from this session.
 
 **Deliberately not done this session:** hermes_v2's exposed `DATABASE_URL` and
 `HERMES_LOG_DB_URL` passwords were redacted from the docs but **not rotated** — they
@@ -85,9 +109,9 @@ belong to a different, production project, and rotating them without coordinatin
 there risks breaking it silently. Flagged for a `hermes_v2`-scoped session.
 
 **Also not done:** git history was not rewritten to purge the old values from past
-commits. Rotation (and the pending Telegram rotation once complete) makes the old
-values inert regardless; rewriting public-repo history is a separate, riskier call
-(force-push, breaks existing clones/forks) that wasn't in scope here.
+commits. Both rotations (DB password, Telegram token) make the old values inert
+regardless; rewriting public-repo history is a separate, riskier call (force-push,
+breaks existing clones/forks) that wasn't in scope here.
 
 ### 4. Bonus fix: server git repo had diverged from origin
 
@@ -143,21 +167,24 @@ Created `_credentials/jr_hermes_vps/` (scaffolding only — the encrypted
 
 ## Open Items for Next Session
 
-1. **Telegram bot token rotation** — waiting on your @BotFather action (see item 3).
-   Once you have the new token: update `/root/.hermes_vps/.env` on the server, verify
-   delivery with a manual digest run, and update `_credentials/jr_hermes_vps/README.md`
-   + `AUDIT_LOG.md` to mark it done.
-2. **hermes_v2's exposed DB passwords** — redacted from JR Hermes VPS's docs, but
+1. **hermes_v2's exposed DB passwords** — redacted from JR Hermes VPS's docs, but
    still need rotation in a `hermes_v2`-scoped session (their own DB, own credentials
    file, needs their own coordination).
-3. **`_credentials/jr_hermes_vps/credentials.env.enc`** — needs you to run the
+2. **`_credentials/jr_hermes_vps/credentials.env.enc`** — needs you to run the
    `openssl enc` step with the vault passphrase (README documents exactly what should
-   go in it).
-4. **Sept 1 synthesis meeting** — still the real gate for the original "S07
+   go in it, including the now-rotated Telegram token and DB password).
+3. **Sept 1 synthesis meeting** — still the real gate for the original "S07
    post-synthesis" work (corrective actions, etc.). Unaffected by this session.
-5. **Verify TELEGRAM_BOT_TOKEN isn't already duplicated in `hermes_v2/`'s vault
-   entry** — flagged in the new README but not checked (that vault folder is
-   encrypted; only you can decrypt it to compare).
+4. **Check whether `hermes_v2/`'s encrypted vault entry duplicates
+   `TELEGRAM_BOT_TOKEN`** — if it does, that copy is now stale after today's rotation
+   and needs updating too. Only you can check (encrypted vault folder).
+5. **`@jr_crypto_knife_bot` mystery** — a separate Telegram chat (your own old bot)
+   is showing content that looks like JR Hermes VPS's daily digest, even though this
+   project's own bot (`@JRHermesVPSBot`) is verified correctly configured and the
+   only one this project's automation actually targets. Best guess (unconfirmed): a
+   different project — possibly `JR_VPS_Orchestrators` — has its own digest
+   automation reading the same shared `vps_orchestrator_findings` table via that old
+   bot. Worth checking that project's Telegram routing config when you get to it.
 
 ---
 
