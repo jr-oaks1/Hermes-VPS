@@ -7,6 +7,30 @@
 
 ---
 
+## Quick Resume (read this first)
+
+Everything planned for this session is **done and verified live**. Nothing is
+blocking. Pick up with whichever open item below is relevant when you return —
+none of them are urgent:
+
+- ✅ Daily digest + weekly health check — both healthy, verified via journalctl
+- ✅ Plaintext secrets redacted from 3 public-repo docs, pushed (`e49ca82`)
+- ✅ `hermes_vps` DB password rotated, verified live
+- ✅ `TELEGRAM_BOT_TOKEN` rotated via @BotFather, verified two ways (`getMe` +
+  a marked test message confirmed in the correct bot thread)
+- ✅ Server git divergence (pre-existing, unrelated to this session) found and fixed
+- ✅ Vault scaffolding created at `_credentials/jr_hermes_vps/`
+- ⏳ **Not done — needs you:** `openssl enc` the new vault entry (README documents
+  what goes in it); check `hermes_v2/`'s encrypted vault for a duplicate Telegram
+  token; check `@jr_crypto_knife_bot` against other projects when convenient
+- ⏳ **Not done — needs a different project's session:** rotate hermes_v2's exposed
+  DB passwords (flagged, not touched here)
+- ⏳ **Gated on a date, not an action:** Sept 1 synthesis meeting — still S08+'s job
+
+Full detail on all of the above is below.
+
+---
+
 ## Summary
 
 S06's "S7 Focus" list was mostly gated on the Sept 1 synthesis meeting (still 5 days
@@ -200,9 +224,11 @@ Created `_credentials/jr_hermes_vps/` (scaffolding only — the encrypted
 | `_credentials/jr_hermes_vps/README.md` | NEW (workspace root, vault scaffolding) |
 | `_credentials/README.md` | Added JR Hermes VPS row |
 | `_credentials/AUDIT_LOG.md` | Added 2026-08-26 incident + remediation entry |
-| Server: `/root/.hermes_vps/.env` | `HERMES_VPS_LOG_DB_URL` password rotated |
-| Server: `/root/.hermes_vps_credentials/CREDENTIALS.md` | Synced to match rotated password |
+| Server: `/root/.hermes_vps/.env` | `HERMES_VPS_LOG_DB_URL` password + `TELEGRAM_BOT_TOKEN` rotated |
+| Server: `/root/.hermes_vps_credentials/CREDENTIALS.md` | Synced to match both rotated values |
 | Server: `/opt/hermes-vps` (git) | Reset to `origin/main`, resolving pre-existing divergence |
+| `_credentials/jr_hermes_vps/README.md` | Updated to mark Telegram rotation done |
+| `_credentials/AUDIT_LOG.md` | Updated to mark Telegram rotation done |
 
 ## Git Commits (S07)
 
@@ -210,8 +236,13 @@ Created `_credentials/jr_hermes_vps/` (scaffolding only — the encrypted
 |--------|---------|
 | `e49ca82` | security: Redact plaintext credentials from S3/S4 session docs |
 | `7d143b2` | chore: findings export (quick, 2026-08-26) — server auto-commit, post-fix |
+| `83d0a57` | docs: S07 handoff — credentials exposure remediated, vault onboarding |
+| `0e57c39` | docs: S07 — Telegram token rotation completed and verified live |
+
+All pushed to `origin/main`; local and remote confirmed in sync at session close.
 
 ---
 
-**Next session:** whoever picks up the Telegram token rotation follow-up, or S08
-(post-synthesis, Sept 1+).
+**Next session:** S08 — either whoever picks up the small vault/duplicate-check
+follow-ups above (no urgency), or the post-synthesis session (Sept 1+), whichever
+comes first.
