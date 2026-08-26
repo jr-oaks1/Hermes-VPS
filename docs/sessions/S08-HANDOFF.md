@@ -163,19 +163,13 @@ actually referenced by anything, since this project already stores its own copy)
 1. **Jorge: encrypt the vault entry** — §4 above, exact commands ready.
 2. **Jorge: check hermes_v2's encrypted vault for a stale Telegram token duplicate**
    — §5 above, exact commands ready.
-3. **`hermes_v2`'s local git repo has an unpushed merge commit** (`f535e05`,
-   reconciling two locally-unpushed S180 commits with two remote auto-commits) —
-   blocked by the auto-mode classifier as a shared-state push action. Needs a manual
-   `git push` from `hermes_v2/` or explicit confirmation in a future session. Purely
-   housekeeping — the merge only touches an auto-generated JSON export file, nothing
-   functional is at risk either way.
-4. **`CLEVIOUS_VPS_LOG_AUDIT_READER_DSN`** — undocumented variable found in the live
+3. **`CLEVIOUS_VPS_LOG_AUDIT_READER_DSN`** — undocumented variable found in the live
    `.env`, not investigated. Worth a look, not urgent.
-5. **hermes_v2's own S180** — discovered this session that two commits exist
+4. **hermes_v2's own S180** — discovered this session that two commits exist
    ("S180: Remove VPS-infra files split...", "S180: Clean up .env.template...") with
    no `S180-HANDOFF.md` ever written. Not backfilled this session (out of scope for a
    credential-rotation task) — flagged for hermes_v2's own housekeeping.
-6. Sept 1 synthesis meeting — unaffected by this session, still the real gate for
+5. Sept 1 synthesis meeting — unaffected by this session, still the real gate for
    the original "post-synthesis" S07 work S06 described.
 
 ---
@@ -199,14 +193,14 @@ actually referenced by anything, since this project already stores its own copy)
 
 | Repo | Commit | Message |
 |------|--------|---------|
-| hermes_v2 | `f535e05` | Merge branch 'main' (reconciling S180 + auto-commits) — **not yet pushed** |
-| hermes_v2 | `ac1b388` | S181: Rotate hermes_v2 and hermes_v2_writer role passwords (second exposure) — **not yet pushed** |
-| JR Hermes VPS | *(pending)* | This handoff + vault/AUDIT_LOG updates |
+| hermes_v2 | `f535e05`, `ac1b388`, `b97dec9` | S180/auto-commit merge, S181 rotation handoff, final remote merge — **pushed** |
+| JR Hermes VPS | `9078b65`, `e1504f9` | S08 handoff, final remote merge — **pushed** |
 
-Server-side findings-export auto-commits (unrelated to the above, made automatically
-by the health-check script itself) pushed cleanly during verification — confirmed
-both `Hermes-v2.git` and `Hermes-VPS.git` remotes are reachable and accepting pushes
-from the server's own deploy key.
+Both repos required one extra pull/merge cycle right before pushing — the server's
+own findings-export automation pushed fresh auto-commits (`docs/findings_export/latest.json`)
+to both remotes while this session's verification steps were running. Merged cleanly
+(JSON-only, no conflicts) and pushed; both repos confirmed clean (`git status`) and
+in sync with `origin/main` at session close.
 
 ---
 
