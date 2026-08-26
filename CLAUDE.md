@@ -88,4 +88,7 @@ recent linked here once it exists.
 
 > ## 🟢 S06 — Daily digest automation deployed (2026-08-22)
 > Resolved all S05 pendings: daily digest script built + deployed + tested to @JRHermesVPSBot (09:00 UTC daily). Git push issue already resolved. Three-tier operational reporting now complete (weekly audit + monthly deep + daily digest). All automation ready for Sept 1 synthesis meeting. See `docs/sessions/S06-HANDOFF.md`.
+
+> ## 🟡 S07 — Credentials exposure remediated + vault onboarding (2026-08-26)
+> Verified daily-digest/weekly-check automation healthy. Found and fixed a real incident while onboarding this project into the workspace's new credentials vault: Telegram bot token, DB passwords (including a cross-project hermes_v2 one), and the Grafana password were committed in plaintext to this project's **public** GitHub repo. Redacted (commit `e49ca82`) and rotated this project's own two secrets; hermes_v2's exposed passwords flagged for a session scoped there instead. Bonus fix: server's git clone had silently diverged from `origin/main` since ~S06 — reset and reconciled. Added `_credentials/jr_hermes_vps/` scaffolding. **Telegram token rotation still pending user's @BotFather action** — see `docs/sessions/S07-HANDOFF.md`. Not the "post-synthesis" S07 originally planned in S06 — that still waits for Sept 1.
 ---
