@@ -33,12 +33,12 @@ Executed 11-step server deployment on Hetzner: cloned repo, installed Python ven
 - Created `/root/.hermes_vps/.env` (mode 600, root-only)
 - 8 required variables set:
   - `PROMETHEUS_RETENTION_DAYS=90`
-  - `GRAFANA_ADMIN_PASSWORD=SecureVPS2026!@#KL9x` (**save for Grafana login**)
+  - `GRAFANA_ADMIN_PASSWORD=<redacted 2026-08-26 — see /root/.hermes_vps_credentials/CREDENTIALS.md>` (**save for Grafana login**)
   - `DATABASE_URL` (hermes main DB)
   - `HERMES_LOG_DB_URL` (hermes_v2 findings)
   - `HERMES_VPS_LOG_DB_URL` (new role/DB created)
   - Telegram bot token + chat ID
-- Created `hermes_vps_log` database + `hermes_vps` role with password `vps_log_secure_2026`
+- Created `hermes_vps_log` database + `hermes_vps` role with password (redacted 2026-08-26 — see server-side credentials file)
 - Verified DB connection: `psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT 1;"` ✅
 
 **Step 4: Systemd Units**
@@ -139,7 +139,7 @@ Pushed to `origin/main`.
 
 **Credentials stored (reference only; never in git):**
 - `PROMETHEUS_RETENTION_DAYS=90`
-- `GRAFANA_ADMIN_PASSWORD=SecureVPS2026!@#KL9x` ← **Save this!**
+- `GRAFANA_ADMIN_PASSWORD=<redacted 2026-08-26>` ← **Save this!**
 - `DATABASE_URL`, `HERMES_LOG_DB_URL`, `HERMES_VPS_LOG_DB_URL`
 - Telegram bot token + chat ID
 

@@ -177,7 +177,7 @@ journalctl -u hermes-vps-audit-monthly.service -n 100 --no-pager
    - Deferred because: Focus on cloud-review automation first
 
 3. **[S5 or S6] Set Up Grafana (Depends on Prometheus)**
-   - Credentials: `GRAFANA_ADMIN_PASSWORD=SecureVPS2026!@#KL9x` (in `/root/.hermes_vps/.env`)
+   - Credentials: `GRAFANA_ADMIN_PASSWORD=<redacted 2026-08-26>` (in `/root/.hermes_vps/.env`)
    - Config: `deploy/grafana/` folder (prometheus.yaml, dashboard configs)
    - Not critical for S5 — findings export and cloud review work without dashboards
 
@@ -218,7 +218,7 @@ journalctl -u hermes-vps-audit-monthly.service -n 100 --no-pager
 | `HERMES_LOG_DB_URL` | PostgreSQL | health-check (cross-project read) | hermes_v2_log findings (read-only) |
 | `TELEGRAM_BOT_TOKEN` | String | health-check (alerts) | @JRHermesVPSBot (Clevious_Hermes_Bot) |
 | `TELEGRAM_CHAT_ID` | String | health-check (alerts) | Private group chat ID |
-| `GRAFANA_ADMIN_PASSWORD` | String | (not yet deployed) | SecureVPS2026!@#KL9x |
+| `GRAFANA_ADMIN_PASSWORD` | String | (not yet deployed) | `<redacted 2026-08-26>` |
 | `PROMETHEUS_RETENTION_DAYS` | Integer | (not yet deployed) | 90 days |
 
 **Do NOT commit these to git.** `.gitignore` has `/root/` excluded already.

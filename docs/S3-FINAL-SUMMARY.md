@@ -61,12 +61,12 @@ python3 -m venv .venv
 Created `/root/.hermes_vps/.env` (mode 600, root-only):
 ```bash
 PROMETHEUS_RETENTION_DAYS=90
-GRAFANA_ADMIN_PASSWORD=SecureVPS2026!@#KL9x
+GRAFANA_ADMIN_PASSWORD=<redacted 2026-08-26 — see /root/.hermes_vps_credentials/CREDENTIALS.md>
 GRAFANA_DATASOURCES_UID=prometheus-default
-DATABASE_URL=postgresql://hermes_v2:XOq8ogT1Dw9kKAItsPSmpHfrI1CTrswo@localhost:5432/hermes_v2
-HERMES_LOG_DB_URL=postgresql://hermes_v2_writer:n1d60rHCFWdLnpI1PyHlnMapwbnF@127.0.0.1:5432/hermes_v2_log
-HERMES_VPS_LOG_DB_URL=postgresql://hermes_vps:vps_log_secure_2026@127.0.0.1:5432/hermes_vps_log
-TELEGRAM_BOT_TOKEN=8832352276:AAF-gOeQMP_XAfHYAm88j3zmuQ_A4QCd_l8
+DATABASE_URL=postgresql://hermes_v2:<redacted 2026-08-26>@localhost:5432/hermes_v2
+HERMES_LOG_DB_URL=postgresql://hermes_v2_writer:<redacted 2026-08-26>@127.0.0.1:5432/hermes_v2_log
+HERMES_VPS_LOG_DB_URL=postgresql://hermes_vps:<redacted 2026-08-26>@127.0.0.1:5432/hermes_vps_log
+TELEGRAM_BOT_TOKEN=<redacted 2026-08-26 — rotated, see _credentials/jr_hermes_vps/>
 TELEGRAM_CHAT_ID=360294128
 ```
 - Database connection verified: `psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT 1;"` ✅
@@ -222,11 +222,11 @@ SELECT * FROM pg_stat_replication;
 | Variable | Value | Notes |
 |----------|-------|-------|
 | PROMETHEUS_RETENTION_DAYS | 90 | Days to keep metrics |
-| GRAFANA_ADMIN_PASSWORD | SecureVPS2026!@#KL9x | **Save for Grafana login** |
+| GRAFANA_ADMIN_PASSWORD | `<redacted — see /root/.hermes_vps_credentials/CREDENTIALS.md>` | **Save for Grafana login** |
 | DATABASE_URL | postgresql://hermes_v2:... | Hermes main DB |
 | HERMES_LOG_DB_URL | postgresql://hermes_v2_writer:... | Hermes findings export |
-| HERMES_VPS_LOG_DB_URL | postgresql://hermes_vps:vps_log_secure_2026@... | VPS findings storage |
-| TELEGRAM_BOT_TOKEN | 8832352276:AAF-gOeQMP_XAfHYAm88j3zmuQ_A4QCd_l8 | @JRHermesVPSBot |
+| HERMES_VPS_LOG_DB_URL | postgresql://hermes_vps:`<redacted>`@... | VPS findings storage |
+| TELEGRAM_BOT_TOKEN | `<redacted — rotated 2026-08-26>` | @JRHermesVPSBot |
 | TELEGRAM_CHAT_ID | 360294128 | Shared infrastructure channel |
 
 ### Rotation Schedule
