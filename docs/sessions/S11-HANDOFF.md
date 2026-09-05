@@ -181,3 +181,34 @@ introduced, only then deploy), not a rushed edit tacked onto a catch-up session.
 (`systemctl status`, `ss -tlnp`, `psql` `SELECT`/`SHOW`, log reads, `diff`). The nginx
 and Grafana changes are repo-only, syncing tracked files to already-live/already-inactive
 reality.
+
+---
+
+## Session close (wrap-up)
+
+- Commit `fbd3aa8` pushed to `origin/main` (`https://github.com/jr-oaks1/Hermes-VPS`).
+  Repo confirmed clean and in sync with remote at close.
+- Memory index (`~/.claude/projects/.../memory/MEMORY.md`) updated with an S11 entry;
+  S10's entry marked superseded rather than deleted, per this workspace's "update or
+  remove stale memory, don't silently overwrite history" convention.
+- Obsidian note (`ObsidianVault/Projects/JR Hermes VPS.md`) appended with an S11
+  summary in this file's established per-session format, committed locally
+  (`3392183`, vault repo has no remote — local commit is the full sync).
+  **Scope note:** the vault repo had substantial pre-existing drift across 8 *other*
+  projects' notes (modified/untracked, none touched this session) — left entirely
+  alone; only this project's own file was staged and committed.
+- **Interaction-numbering + hallucination-flagging ground rule:** confirmed already
+  binding workspace-wide (`GLOBAL_GROUND_RULES.md` Rules 1–2, effective 2026-08-31;
+  `INTERACTION_NUMBERING_STANDARD.md` at the workspace root) — re-verified by reading
+  both files live this session (interaction 02). No new rule needed; nothing to change
+  here or in any other project.
+
+## Quick resume for S12
+
+**Start here:** §4 above (`hermes_vps_health_check.py` CRITICAL fix) is the single
+highest-value next action — a 10-day-old suspected false-alert source on a live
+production timer. Everything else in the "For S12" list is lower urgency and can be
+sequenced after.
+
+**Nothing is currently blocked.** No pending user decision, no open cross-project
+notice addressed to this project, no in-progress risky change left mid-flight.
