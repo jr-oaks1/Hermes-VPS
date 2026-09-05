@@ -147,11 +147,71 @@ introduced, only then deploy), not a rushed edit tacked onto a catch-up session.
 
 ---
 
-## For S12
+## 5. Extended session — JR_VPS_Orchestrators confirmed §4 live, plus a second real bug
 
-1. **Fix `hermes_vps_health_check.py`** (top priority): remove `hermes_v2` from
-   `SYSTEMD_SERVICES`, repoint `repo_dir`/git-sync default and the `HERMES_LOG_DB_URL`
-   env-file read at Ingestor's actual live paths (verify both first — don't assume).
+After this handoff was first written, a new notice arrived
+(`docs/CROSS-PROJECT-NOTICE-2026-09-05-hermes-vps-three-failed-units.md`, from
+JR_VPS_Orchestrators S75's own forensic audit) reporting three of this project's
+systemd units in `failed` state. Investigated live:
+
+**`hermes-vps-healthcheck-weekly.service` / `hermes-vps-audit-monthly.service`
+(both `status=1/FAILURE`):** root cause confirmed — this is exactly §4's suspected
+bug, but worse than "false alert." The health check itself completes correctly
+(findings gathered, logged, Telegram sent), but the script's exit code is tied to a
+**findings-export `git push`** step afterward, which fails because both server-side
+clones (`/opt/hermes_v2` and `/opt/hermes-vps`) have diverged from `origin/main`
+(non-fast-forward — other sessions/projects push to the same repos directly, the
+server's clones don't rebase). It's also still pushing findings exports to the
+**decommissioned `hermes_v2` GitHub repo**. Net effect: the unit shows `failed` even
+though the actual check ran fine — not fixed this session (needs the same
+stage-and-smoke-test treatment as the daily-digest fix below, and touches more of the
+script than there was time for).
+
+**`hermes-vps-daily-digest.service` (`status=2/INVALIDARGUMENT`):** different script,
+different bug, root-caused and **fixed** (code only — not yet deployed live, see
+below). `send_telegram()` sent finding summaries into a `parse_mode=HTML` Telegram
+message unescaped. `JR_VPS_Orchestrators`' own findings include raw UFW-log text like
+`SRC=<ip> DST=<ip> TOS=<hex>` — Telegram's HTML parser reads `<ip>`/`<hex>` as broken
+tags and returns HTTP 400. The script's `send_telegram()` only printed a diagnostic on
+a *raised exception*; a non-2xx response without an exception returned `False`
+silently, so `journalctl` showed nothing beyond `status=2`, matching exactly what
+JR_VPS_Orchestrators observed.
+
+**Fix (staged and smoke-tested, `scripts/audit/hermes_vps_daily_digest.py`):**
+`html.escape()` on `source` and `summary` before interpolation into the HTML message,
+plus logging the actual HTTP status/body on a non-ok Telegram response instead of
+staying silent. Verified live: backed up the production file
+(`hermes_vps_daily_digest.py.bak-s12` on Hetzner), staged the fix to `/tmp`, ran it
+directly against the live DB/credentials — **exit 0, "digest sent (112 findings, past
+24h)."** This sent a real Telegram message to `@JRHermesVPSBot` (not a dry run).
+
+**🔴 NOT DEPLOYED — blocked by the permission classifier, needs explicit user
+confirmation before S12 (or a resumed S11) proceeds:**
+```bash
+cp /tmp/hermes_vps_daily_digest.py.staged /opt/hermes-vps/scripts/audit/hermes_vps_daily_digest.py
+chown root:root /opt/hermes-vps/scripts/audit/hermes_vps_daily_digest.py
+chmod 755 /opt/hermes-vps/scripts/audit/hermes_vps_daily_digest.py
+systemctl reset-failed hermes-vps-daily-digest.service
+```
+Live confirmed at session close: the production script is still the *pre-fix* version
+(md5 matches the backup), `hermes-vps-daily-digest.service` still shows `failed` from
+this morning's real run. The code fix is committed to this repo; the live host is not
+yet updated.
+
+---
+
+## For S12 (or a resumed S11)
+
+0. **Decide whether to deploy the already-staged, already-smoke-tested daily-digest
+   fix** (§5 above) — the four commands are ready, backup exists, smoke test passed.
+   This is the fastest win available and needs only a yes/no.
+1. **Fix the weekly/monthly git-push-tied exit code** (§5) — health checks are
+   functionally fine but reported `failed`; root cause is findings-export trying to
+   push to a diverged/decommissioned repo. Needs its own stage-and-test pass.
+2. **Fix `hermes_vps_health_check.py`** (original §4 item, now confirmed live via §5):
+   remove `hermes_v2` from `SYSTEMD_SERVICES`, repoint `repo_dir`/git-sync default and
+   the `HERMES_LOG_DB_URL` env-file read at Ingestor's actual live paths (verify both
+   first — don't assume).
    Stage + smoke-test per the binding rule before touching the live systemd timer.
 2. **Query `hermes_vps_log.findings_log`** for the last 10 days to confirm/quantify the
    suspected false "hermes_v2 down" alert volume — cheap, would turn a hypothesis into

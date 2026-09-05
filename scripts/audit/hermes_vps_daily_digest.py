@@ -19,6 +19,7 @@ Exit codes: 0 = success, 1 = DB error, 2 = Telegram error, 3 = config error.
 
 from __future__ import annotations
 
+import html
 import os
 import sys
 from datetime import datetime, timedelta, timezone
@@ -93,13 +94,13 @@ def format_digest(findings: list[dict]) -> str:
     for source in sorted(by_source.keys()):
         items = by_source[source]
         total = sum(len(v) for v in items.values())
-        lines.append(f"<b>{source}</b>: {total} findings")
+        lines.append(f"<b>{html.escape(source)}</b>: {total} findings")
 
         for severity in ["critical", "warning", "info"]:
             if items[severity]:
                 marker = {"critical": "🔴", "warning": "🟡", "info": "ℹ️ "}[severity]
                 for summary in items[severity][:3]:  # Show top 3 per severity
-                    lines.append(f"  {marker} {summary}")
+                    lines.append(f"  {marker} {html.escape(summary)}")
                 if len(items[severity]) > 3:
                     lines.append(f"  ... and {len(items[severity]) - 3} more {severity}")
 
@@ -114,6 +115,8 @@ def send_telegram(bot_token: str, chat_id: str, text: str) -> bool:
             json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
             timeout=15,
         )
+        if not resp.ok:
+            print(f"error: telegram send failed: HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
         return resp.ok
     except Exception as e:
         print(f"error: telegram send failed: {e}", file=sys.stderr)
