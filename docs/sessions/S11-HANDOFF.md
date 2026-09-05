@@ -198,13 +198,24 @@ Live confirmed at session close: the production script is still the *pre-fix* ve
 this morning's real run. The code fix is committed to this repo; the live host is not
 yet updated.
 
+**🟢 DEPLOYED (same session, resumed):** user confirmed go-ahead. Verified staged file
+and backup present, production file pre-fix (md5 `26d72ee9...`), service `failed`
+before touching anything. Ran the four commands from above — file copied
+(md5 now `4a0d61905f95177eae486d05fbd020af`, matching the staged/smoke-tested version),
+ownership/perms set, `systemctl reset-failed` cleared the failed state. Then manually
+triggered `systemctl start hermes-vps-daily-digest.service` to prove the fix live rather
+than waiting for tomorrow's 09:00 UTC run: **`status=0/SUCCESS`**, log line
+`digest sent (112 findings, past 24h)`, clean deactivation. Real Telegram message sent
+to `@JRHermesVPSBot`. Fix is fully deployed and live-verified, not just staged — §0 of
+the "For S12" list below is now closed.
+
 ---
 
 ## For S12 (or a resumed S11)
 
-0. **Decide whether to deploy the already-staged, already-smoke-tested daily-digest
-   fix** (§5 above) — the four commands are ready, backup exists, smoke test passed.
-   This is the fastest win available and needs only a yes/no.
+0. ~~Decide whether to deploy the already-staged, already-smoke-tested daily-digest
+   fix~~ — **DONE, same session** (§5 above): deployed and live-verified
+   (`status=0/SUCCESS`, real digest sent).
 1. **Fix the weekly/monthly git-push-tied exit code** (§5) — health checks are
    functionally fine but reported `failed`; root cause is findings-export trying to
    push to a diverged/decommissioned repo. Needs its own stage-and-test pass.
