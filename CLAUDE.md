@@ -25,15 +25,18 @@ this project didn't exist yet.
   (CPU/mem/disk/SSL/replication, `service.started`)
 
 **What does NOT live here:** the actual applications running on the host.
-`hermes_v2` (conceptually "JR Hermes Ingestor" going forward — ingestion +
-trading logic, same repo, no code split) keeps its own app-level deploy
-(`deploy.sh`, `hermes_v2.service`), its own app-level Telegram bot
-(`JRHermesIngestorbot`), and its own findings export/cloud-review pipeline
-(`docs/findings_export/`, `hermes_v2_log.findings_log`) — unchanged by this
-split. This project's health check reads `hermes_v2`'s DB and calls its
-`hermes_replication_status()` function remotely, and cross-reads
-`/opt/hermes_v2/.env` for one credential (`HERMES_LOG_DB_URL`) — that's the full
-extent of the coupling.
+`hermes_v2` is decommissioned (`hermes_v2.service` stopped/disabled since
+Ingestor's S8, 2026-08-26); its ingestion role now belongs to **`JR Hermes
+Ingestor`** — a fully separate repo
+(`https://github.com/jr-oaks1/JR-Hermes-Ingestor`), its own systemd service
+(`hermes-ingestor.service`, port 8003, Hetzner), its own database role
+(`hermes_ingestor`) and its own findings DB (`hermes_ingestor_log`) — corrected
+here S11 (2026-09-05), stale since S09. This project's health check no longer
+cross-reads `/opt/hermes_v2/.env` — that credential (`HERMES_LOG_DB_URL`
+equivalent) now lives in Ingestor's own `/opt/hermes-ingestor/.env`; if the
+health check script still points at the old path, that's a live bug to fix,
+not documentation drift (unverified this session — flag for next session to
+grep `scripts/audit/hermes_vps_health_check.py` for the old path).
 
 Read **[../HERMES_PLATFORM_STANDARD.md](../HERMES_PLATFORM_STANDARD.md)** before
 any infrastructure change — this project *is* Hermes-platform infra. Also read
