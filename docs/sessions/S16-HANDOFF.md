@@ -155,6 +155,11 @@ replication, and any future Tier 3 guardrail / Tier 4 escalation code).
   Telegram alert with no matching `findings_log` row (and vice-versa) in the same window.
 - Fold the rule into this project's CLAUDE.md and memory as a binding local standard.
 
+**Codified platform-wide S16:** added to `CONTINUOUS_IMPROVEMENT_STANDARD.md` §5f as
+**Rule T-LOG.2** (all projects, next session forward) + a line in the top banner. JR
+Hermes VPS carries the first compliance audit (this item). `/opt/CONTINUOUS_IMPROVEMENT_STANDARD.md`
+on Hetzner still needs the same edit synced — SSH-blocked, add to §3 sync list.
+
 ### 6b. Hetzner Branch Manager self-report endpoint — doesn't exist
 `ORGANIZATIONAL_STRUCTURE.md` §"Two-Channel Alert Escalation" line ~194: Contabo projects
 POST alerts to `http://100.121.245.4:8002/self-report`; **"Hetzner projects: equivalent
