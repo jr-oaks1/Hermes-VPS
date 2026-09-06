@@ -38,10 +38,11 @@ Ingestor`** — a fully separate repo
 (`hermes_ingestor`) and its own findings DB (`hermes_ingestor_log`) — corrected
 here S11 (2026-09-05), stale since S09. This project's health check no longer
 cross-reads `/opt/hermes_v2/.env` — that credential (`HERMES_LOG_DB_URL`
-equivalent) now lives in Ingestor's own `/opt/hermes-ingestor/.env`; if the
-health check script still points at the old path, that's a live bug to fix,
-not documentation drift (unverified this session — flag for next session to
-grep `scripts/audit/hermes_vps_health_check.py` for the old path).
+equivalent) now lives in Ingestor's own `/opt/hermes-ingestor/.env`.
+**Verified clean S15 (2026-09-06):** `scripts/audit/hermes_vps_health_check.py`
+has no `/opt/hermes_v2/.env` path — the secondary `EnvironmentFile` was dropped
+S13 and the script reads only `/root/.hermes_vps/.env` (it does still read the
+`hermes_v2` DB via `DATABASE_URL` for replication/freshness checks — intentional).
 
 Read **[../HERMES_PLATFORM_STANDARD.md](../HERMES_PLATFORM_STANDARD.md)** before
 any infrastructure change — this project *is* Hermes-platform infra. Also read
@@ -114,4 +115,7 @@ recent linked here once it exists.
 
 > ## 🟡 S14 — Closed all S13 pendings, reboot executed, one new cross-project bug surfaced (2026-09-06)
 > With explicit user go-ahead on every gated item: dropped `temp_recovery_s23` DB (2.6 GB, safety-dumped first), removed unused `/swapfile2` (8 GB), added a persistent journald cap and a fail2ban `recidive` jail, ran `apt dist-upgrade` (postgres auto-restarted via trigger, replication verified unaffected), then executed the planned reboot (kernel `-137`→`-139`) with a clean `hermes-ingestor` stop/start and full post-reboot verification (nginx, postgres bind, replication, all timers — all green). Disk 70%→58%. **New finding, not fixed here:** `walk_forward_monitor.service` (hermes_v2-owned) is broken — the `sentiment` table in the `hermes_v2` DB is now owned by `hermes_ingestor` (apparent side effect of the DB least-privilege split) and `hermes_v2`'s role lost SELECT on it; host now shows `degraded` solely because of this real cross-project issue (not a health-check false positive). Cross-project notices written to JR Hermes Ingestor and JR Basic Crypto Signals. See `docs/sessions/S14-HANDOFF.md`.
+
+> ## 🟢 S15 — S14 residuals closed; host back to `running` (2026-09-06)
+> With the user's explicit one-time authorization to apply a cross-project fix directly: root-caused and fixed `walk_forward_monitor.service` live — `public.sentiment` (hermes_v2 DB, owned by `hermes_ingestor` since the least-privilege split) was re-granted to `crypto_signals_research`/`cyclestation`/`audit_reader` but **not** the `hermes_v2` role. Applied `GRANT SELECT ON public.sentiment TO hermes_v2`; service now exits `0/SUCCESS`, `is-system-running` **`degraded` → `running`**, replication `streaming/0`. Deliberately did *not* blanket-grant the other 19 ingestor-owned tables `hermes_v2` lost (verified `bronze-audit-daily`/`funnel_scoring`/`server_health_audit` last runs all exited 0 — none need them). Verified the stale `/opt/hermes_v2/.env` CLAUDE.md flag is a non-issue (script clean since S13). All other S14 residuals are load-bearing (`/opt/hermes_v2` teardown) or too-fresh (1.2 GB safety dump) — documented, not forced. Cross-project notice to Ingestor to fold the grant into source. See `docs/sessions/S15-HANDOFF.md`.
 ---
