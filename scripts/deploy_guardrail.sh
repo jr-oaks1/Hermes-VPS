@@ -16,6 +16,7 @@ cd "$REPO"
 
 echo "== 1. executable bit + syntax =="
 for f in scripts/log_finding.py \
+         scripts/emission_state.py \
          scripts/audit/hermes_vps_guardrail.py \
          scripts/audit/hermes_vps_escalation_check.py \
          scripts/audit/hermes_vps_reconcile.py; do
@@ -25,10 +26,23 @@ for f in scripts/log_finding.py \
 done
 echo "   ok"
 
+echo "== 1b. offline test suite (emission gate + escalation classification) =="
+if [ -d tests ] && "$PY" -c "import pytest" 2>/dev/null; then
+  "$PY" -m pytest -q tests/ || { echo "   FAIL: unit tests red — do not deploy"; exit 1; }
+else
+  echo "   (pytest or tests/ unavailable on host — offline suite runs in CI/dev)"
+fi
+
 echo "== 2. real dry-run (every check runs; nothing written: DB, Telegram, state, heartbeat) =="
 set -a; . /root/.hermes_vps/.env; set +a
 HERMES_VPS_STATE_DIR=/tmp/hermes-vps-deploycheck "$PY" scripts/audit/hermes_vps_guardrail.py --dry-run
 rm -rf /tmp/hermes-vps-deploycheck
+
+echo "== 2b. escalation check dry-run (classify + reconcile read-only; nothing written) =="
+( unset FINDINGS_DB_URL
+  HERMES_VPS_STATE_DIR=/tmp/hermes-vps-esc-deploycheck \
+    "$PY" scripts/audit/hermes_vps_escalation_check.py --dry-run )
+rm -rf /tmp/hermes-vps-esc-deploycheck
 
 echo "== 3. unit syntax =="
 systemd-analyze verify \
@@ -59,6 +73,46 @@ echo "   heartbeat: $(cat /var/lib/hermes-vps/guardrail.heartbeat)"
 echo "== 5. start the escalation check once =="
 systemctl start hermes-vps-escalation.service
 systemctl is-active hermes-vps-escalation.service || true
+
+# ---- S18 regression guards: the escalation check must not spew steady-state INFO
+# nor insert INFO rows as action_status='open' (that is the bug S18 fixed) --------
+psql_scalar() { psql "$HERMES_VPS_LOG_DB_URL" -tAc "$1" | tr -d '[:space:]'; }
+
+echo "== 6. bounded-emission assertion (S18) =="
+# Step 5 already ran the check once; this is the 2nd consecutive run. In steady
+# state (no state change, hourly roll-up already spent) it must emit 0 rows.
+# (Rare false-fail if a real WARNING or the hour boundary lands between the two
+#  runs — re-run the script.)
+T0=$(psql_scalar "SELECT extract(epoch from now())::bigint")
+systemctl start hermes-vps-escalation.service
+sleep 3
+NEW=$(psql_scalar "SELECT count(*) FROM findings_log
+                    WHERE session_ref LIKE 'vps-escalation-%' AND ts > to_timestamp($T0)")
+if [ "${NEW:-99}" -ne 0 ]; then
+  echo "   FAIL: a steady-state escalation run emitted $NEW row(s) — emission gate not active"
+  psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT ts,severity,summary FROM findings_log
+       WHERE session_ref LIKE 'vps-escalation-%' AND ts > to_timestamp($T0) ORDER BY ts"
+  exit 1
+fi
+echo "   ok: 2nd consecutive steady-state run emitted 0 rows"
+
+echo "== 7. action_status assertion (S18) — no INFO row may enter 'open' =="
+OPEN_INFO=$(psql_scalar "SELECT count(*) FROM findings_log
+                          WHERE severity='info' AND action_status='open'")
+if [ "${OPEN_INFO:-99}" -ne 0 ]; then
+  echo "   FAIL: $OPEN_INFO INFO row(s) with action_status='open' — run deploy/sql/S18_findings_log_info_settle.sql"
+  exit 1
+fi
+echo "   ok: 0 INFO rows are 'open'"
+
+echo "== 8. T-LOG.3 guard — no retention policy on findings_log =="
+RET=$(psql_scalar "SELECT count(*) FROM timescaledb_information.jobs
+                    WHERE proc_name LIKE '%retention%' AND hypertable_name='findings_log'")
+if [ "${RET:-99}" -ne 0 ]; then
+  echo "   FAIL: $RET retention job(s) on findings_log — T-LOG.3 forbids retention on this table"
+  exit 1
+fi
+echo "   ok: 0 retention jobs"
 
 echo
 echo "ALL T3.11 DEPLOYMENT ASSERTIONS PASSED — safe to: systemctl enable --now hermes-vps-{guardrail,escalation}.timer"

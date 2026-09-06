@@ -38,6 +38,7 @@ Exit codes: 0 = no CEO-band escalation, 1 = at least one CEO-band escalation, 2 
 
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 import sys
@@ -50,6 +51,7 @@ sys.path.insert(0, _SCRIPT_DIR)                            # repo/scripts/audit
 from log_finding import (  # noqa: E402
     Finding, log_findings, open_critical, mark_escalated, state_dir,
 )
+from emission_state import load_state, save_state, throttle  # noqa: E402
 
 _GM_ESCALATE_AFTER = timedelta(hours=2)     # T4.1
 _CEO_ESCALATE_AFTER = timedelta(hours=24)   # T4.2
@@ -57,6 +59,13 @@ _LOOKBACK = timedelta(days=3)               # query window > CEO threshold + mar
 
 _HEARTBEAT_WARN_AFTER = timedelta(minutes=20)
 _HEARTBEAT_CRIT_AFTER = timedelta(minutes=60)
+
+# S18: this check runs every 15 min and emitted 3 INFO rows EVERY cycle (288/day)
+# into a table Rule T-LOG.3 forbids ever pruning. It now shares the guardrail's
+# emission gate (scripts/emission_state.py). debounce_default=1 → a real escalation
+# still emits on its first failing cycle; only steady-state INFO is throttled.
+_STATE_FILE = "escalation_state.json"
+_ALLCLEAR_EVERY_SEC = 3600
 
 _GM_MIRROR = "/opt/jrvps-orchestrator/scripts/log_operational_finding.py"
 _VENV_PY = "/opt/hermes-vps/.venv/bin/python3"
@@ -187,12 +196,15 @@ def _mirror_to_gm_ladder(row: dict, message: str) -> list[Finding]:
 # Runner
 # --------------------------------------------------------------------------- #
 
-def run() -> int:
+def run(dry_run: bool = False) -> int:
     db_url = os.environ.get("HERMES_VPS_LOG_DB_URL", "")
     if not db_url:
-        log_findings([Finding("error", "critical",
-                              "escalation: HERMES_VPS_LOG_DB_URL not set — Tier 4 cannot run")],
-                     session_ref=SESSION_REF)
+        if not dry_run:
+            log_findings([Finding("error", "critical",
+                                  "escalation: HERMES_VPS_LOG_DB_URL not set — Tier 4 cannot run")],
+                         session_ref=SESSION_REF)
+        else:
+            print("escalation: HERMES_VPS_LOG_DB_URL not set — Tier 4 cannot run")
         return 2
 
     now = datetime.now(timezone.utc)
@@ -204,9 +216,12 @@ def run() -> int:
         rows = open_critical(db_url, now - _LOOKBACK)
     except Exception as e:  # noqa: BLE001
         # A Tier 4 check that cannot read its own state must be as loud as a failure.
-        log_findings([Finding("error", "critical",
-                              "escalation: cannot reach findings_log", detail=str(e))],
-                     session_ref=SESSION_REF)
+        if not dry_run:
+            log_findings([Finding("error", "critical",
+                                  "escalation: cannot reach findings_log", detail=str(e))],
+                         session_ref=SESSION_REF)
+        else:
+            print(f"escalation: cannot reach findings_log — {e}")
         return 2
 
     if not rows:
@@ -224,8 +239,10 @@ def run() -> int:
             ))
             if cls["band"] == "ceo":
                 ceo_band = True
-            # Latch + mirror once per band crossing.
-            if row.get("escalated_gm_at") is None:
+            # Latch + mirror once per band crossing. Skipped in --dry-run
+            # (mark_escalated writes the DB; _mirror_to_gm_ladder shells out to
+            # the GM's script and writes vps_orchestrator_findings).
+            if row.get("escalated_gm_at") is None and not dry_run:
                 try:
                     mark_escalated(db_url, row["id"], "gm")
                 except Exception as e:  # noqa: BLE001
@@ -233,16 +250,18 @@ def run() -> int:
                                             f"escalation: could not latch escalated_gm_at for #{row['id']}",
                                             detail=str(e)))
                 findings.extend(_mirror_to_gm_ladder(row, cls["message"]))
-            if cls["band"] == "ceo" and row.get("escalated_ceo_at") is None:
+            if cls["band"] == "ceo" and row.get("escalated_ceo_at") is None and not dry_run:
                 try:
                     mark_escalated(db_url, row["id"], "ceo")
                 except Exception:  # noqa: BLE001
                     pass
         # One summary line for the below-threshold criticals, never one each
         # (S17 smoke test: per-row INFO every 15 min is a slow feedback loop).
+        # Distinct key prefix ('escalation.subthreshold') so the emission gate
+        # never reads this INFO line as a recovery of an active 'escalation:' alert.
         if below:
             findings.append(Finding("finding", "info",
-                                    f"escalation: {below} open critical(s) below the 2h GM threshold"))
+                                    f"escalation.subthreshold: {below} open critical(s) below the 2h GM threshold"))
 
     # --- T3.10 heartbeat staleness ---
     timer_enabled = _timer_enabled("hermes-vps-guardrail.timer")
@@ -255,10 +274,36 @@ def run() -> int:
     except Exception as e:  # noqa: BLE001
         findings.append(Finding("error", "warning", "reconcile: check raised", detail=str(e)))
 
-    log_findings(findings, session_ref=SESSION_REF,
-                 header="🛡️ Tier 4 escalation + guardrail heartbeat + T-LOG.2 reconcile")
+    # --- S18 emission gate: state-change INFO + one hourly all-clear only ---
+    # WARNING/CRITICAL still emit on the first failing cycle (debounce_default=1);
+    # this only suppresses the 3 steady-state INFO lines that ran 96×/day.
+    now_ts = now.timestamp()
+    if dry_run:
+        print("--- DRY RUN — no writes (DB, Telegram, state, latch, GM mirror) ---")
+        for f in findings:
+            print(f"  [{f.severity.upper():8}] {f.summary}" + (f" — {f.detail}" if f.detail else ""))
+        state = load_state(_STATE_FILE)
+        emitted, _ = throttle(findings, state, now_ts, debounce_default=1,
+                              allclear_every_sec=_ALLCLEAR_EVERY_SEC,
+                              allclear_summary=lambda n: f"escalation: all {n} checks nominal",
+                              recovered_summary=lambda k: f"{k}: cleared")
+        print(f"\nwould emit {len(emitted)} of {len(findings)} finding(s) after the gate")
+        return 1 if ceo_band else 0
 
-    for f in findings:
+    state = load_state(_STATE_FILE)
+    emitted, new_state = throttle(
+        findings, state, now_ts,
+        debounce_default=1,
+        allclear_every_sec=_ALLCLEAR_EVERY_SEC,
+        allclear_summary=lambda n: f"escalation: all {n} checks nominal",
+        recovered_summary=lambda k: f"{k}: cleared",
+    )
+
+    log_findings(emitted, session_ref=SESSION_REF,
+                 header="🛡️ Tier 4 escalation + guardrail heartbeat + T-LOG.2 reconcile")
+    save_state(_STATE_FILE, new_state)
+
+    for f in emitted:
         print(f"[{f.severity.upper()}] {f.summary}" + (f" — {f.detail}" if f.detail else ""))
 
     return 1 if ceo_band else 0
@@ -274,4 +319,8 @@ def _timer_enabled(unit: str) -> bool | None:
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    ap = argparse.ArgumentParser(description="Tier 4 durable escalation ladder + heartbeat + reconcile")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="classify + reconcile read-only; write nothing (DB/Telegram/state/latch/GM mirror)")
+    args = ap.parse_args()
+    sys.exit(run(dry_run=args.dry_run))

@@ -47,6 +47,7 @@ sys.path.insert(0, os.path.dirname(_SCRIPT_DIR))                   # repo/script
 sys.path.insert(0, _SCRIPT_DIR)
 
 from log_finding import Finding, log_findings, state_dir  # noqa: E402
+from emission_state import load_state, save_state, throttle  # noqa: E402
 import psycopg  # noqa: E402
 import requests  # noqa: E402
 
@@ -210,80 +211,22 @@ def check_findings_table_size() -> list[Finding]:
 # --------------------------------------------------------------------------- #
 # Debounce + state
 # --------------------------------------------------------------------------- #
+# The debounce/state-change/roll-up mechanism now lives in scripts/emission_state.py
+# (S18) so the Tier 4 escalation check shares one implementation. This thin shim
+# keeps the guardrail's tuning (_DEBOUNCE / _DEBOUNCE_DEFAULT) local and the
+# public name stable — tests/test_guardrail_debounce.py imports apply_debounce.
 
-def _load_state() -> dict:
-    path = os.path.join(state_dir(), "guardrail_state.json")
-    try:
-        with open(path) as fh:
-            return json.load(fh)
-    except (OSError, json.JSONDecodeError):
-        return {}
-
-
-def _save_state(state: dict) -> None:
-    path = os.path.join(state_dir(), "guardrail_state.json")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w") as fh:
-        json.dump(state, fh)
-    os.replace(tmp, path)
-
-
-def _key(f: Finding) -> str:
-    # stable per-check identity: the part of the summary before the first ':'
-    return f.summary.split(":", 1)[0].strip()
+_STATE_FILE = "guardrail_state.json"
 
 
 def apply_debounce(raw: list[Finding], state: dict, now_ts: float) -> tuple[list[Finding], dict]:
-    """Returns (emitted_findings, new_state). Suppresses a failing check until it
-    has failed N consecutive cycles; emits INFO only on state change or the
-    hourly all-clear."""
-    counters = state.get("fail_counters", {})
-    last_status = state.get("last_status", {})
-    last_allclear = state.get("last_allclear", 0)
-    new_counters: dict[str, int] = {}
-    new_status: dict[str, str] = {}
-    emitted: list[Finding] = []
-
-    all_ok = True
-    for f in raw:
-        k = _key(f)
-        failing = f.severity in ("warning", "critical")
-        prev = last_status.get(k, "info")
-        if failing:
-            all_ok = False
-            n = counters.get(k, 0) + 1
-            new_counters[k] = n
-            threshold = _DEBOUNCE.get(k, _DEBOUNCE_DEFAULT)
-            if n >= threshold:
-                emitted.append(f)
-                new_status[k] = f.severity
-            else:
-                # still within grace — record as info, note the pending failure
-                emitted.append(Finding("finding", "info",
-                                       f"{f.summary} (debounce {n}/{threshold})"))
-                new_status[k] = "info"
-        else:
-            new_counters[k] = 0
-            new_status[k] = "info"
-            if prev in ("warning", "critical"):
-                emitted.append(Finding("finding", "info", f"{k}: recovered"))
-            elif prev == "info" and last_status.get(k) is None:
-                pass  # first sight, no spam
-
-    # hourly all-clear roll-up
-    if all_ok and (now_ts - last_allclear) >= _ALLCLEAR_EVERY_SEC:
-        emitted.append(Finding("finding", "info",
-                               f"guardrail: all {len(raw)} checks OK"))
-        last_allclear = now_ts
-
-    new_state = {
-        "fail_counters": new_counters,
-        "last_status": new_status,
-        "last_allclear": last_allclear,
-        "last_run": now_ts,
-    }
-    return emitted, new_state
+    return throttle(
+        raw, state, now_ts,
+        debounce=_DEBOUNCE,
+        debounce_default=_DEBOUNCE_DEFAULT,
+        allclear_every_sec=_ALLCLEAR_EVERY_SEC,
+        allclear_summary=lambda n: f"guardrail: all {n} checks OK",
+    )
 
 
 def write_heartbeat(worst: str, n_checks: int) -> None:
@@ -333,7 +276,7 @@ def run(dry_run: bool = False) -> int:
         print(f"guardrail: collect failed: {e}", file=sys.stderr)
         return 2
 
-    state = _load_state()
+    state = load_state(_STATE_FILE)
     emitted, new_state = apply_debounce(raw, state, now_ts)
     worst = max((f.severity for f in raw),
                 key=lambda s: ("info", "warning", "critical").index(s))
@@ -347,7 +290,7 @@ def run(dry_run: bool = False) -> int:
 
     log_findings(emitted, session_ref=f"vps-guardrail-{datetime.now(timezone.utc):%Y%m%d}",
                  header="🛡️ Tier 3 guardrail")
-    _save_state(new_state)
+    save_state(_STATE_FILE, new_state)
     write_heartbeat(worst, len(raw))    # only reached if nothing above raised
 
     for f in emitted:

@@ -47,7 +47,13 @@ import requests
 
 SEVERITIES = ("info", "warning", "critical")
 CATEGORIES = ("finding", "error", "note", "alert")
+ACTION_STATUSES = ("open", "in_progress", "resolved", "closed", "no_action_needed")
 SOURCE = "hermes-vps"
+
+# S18: which severities enter the log as an unresolved work item. "open" must mean
+# "a human still has to do something" — otherwise the Tier 4 ladder and the
+# "0 open actionable findings" health metric both drown in steady-state INFO.
+_ACTIONABLE_SEVERITIES = ("warning", "critical")
 
 # WARNING and above must reach Telegram; INFO is findings-log only (T-LOG.2 §exempt).
 _TELEGRAM_MIN_SEVERITY = ("warning", "critical")
@@ -73,12 +79,31 @@ class Finding:
     detail: str = ""
     owner_project: str | None = None
     event_uid: str = field(default_factory=lambda: uuid.uuid4().hex)
+    # S18: normally None → derived from severity by initial_action_status().
+    # Set explicitly only to force an INFO row 'open' (a genuine work item that
+    # happens to be low-severity) or to pre-close a warning.
+    action_status: str | None = None
 
     def __post_init__(self) -> None:
         if self.severity not in SEVERITIES:
             raise ValueError(f"bad severity {self.severity!r}")
         if self.category not in CATEGORIES:
             raise ValueError(f"bad category {self.category!r}")
+        if self.action_status is not None and self.action_status not in ACTION_STATUSES:
+            raise ValueError(f"bad action_status {self.action_status!r}")
+
+
+def initial_action_status(f: "Finding") -> str:
+    """The action_status a finding enters findings_log with.
+
+    An explicit f.action_status always wins. Otherwise it is derived from
+    severity: an INFO row is a permanent observation, never a work item, so it
+    enters already settled; a WARNING/CRITICAL row is actionable until a human
+    dispositions it.
+    """
+    if f.action_status is not None:
+        return f.action_status
+    return "open" if f.severity in _ACTIONABLE_SEVERITIES else "no_action_needed"
 
 
 # --------------------------------------------------------------------------- #
@@ -175,13 +200,14 @@ def insert_findings(
     telegram_status: dict[str, bool],
 ) -> int:
     """One transaction, one row per finding. Writes event_uid + telegram_sent +
-    owner_project alongside the existing columns. action_status defaults to
-    'open' at the DB level. Returns rows written."""
+    owner_project + action_status (via initial_action_status — INFO enters
+    settled, WARNING/CRITICAL enters 'open') alongside the existing columns.
+    Returns rows written."""
     rows = [
         (
             session_ref, f.category, f.severity, f.summary, f.detail or None,
             SOURCE, bool(telegram_status.get(f.event_uid, False)),
-            f.event_uid, f.owner_project,
+            f.event_uid, f.owner_project, initial_action_status(f),
         )
         for f in findings
     ]
@@ -191,8 +217,8 @@ def insert_findings(
                 """
                 INSERT INTO findings_log
                     (session_ref, category, severity, summary, detail, source,
-                     telegram_sent, event_uid, owner_project)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     telegram_sent, event_uid, owner_project, action_status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 rows,
             )
