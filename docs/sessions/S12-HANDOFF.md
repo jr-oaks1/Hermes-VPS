@@ -82,3 +82,41 @@ thing: **item 2 (stale `hermes_v2` references in the health-check script)** is t
 oldest-standing, highest-confidence bug (likely false-alerting daily) and hasn't
 had a fix attempt yet. Item 1 (git-push exit code) is comparably important but
 needs more script surgery. Items 3-6 are lower urgency/cross-project.
+
+---
+
+## 4. Note: latest daily digest observed (2026-09-05, ~09:00 UTC, @JRHermesVPSBot)
+
+Digest body captured from Telegram (not independently re-queried this session —
+recorded as-received):
+
+```
+📊 Daily Digest (past 24h)
+🔴 4 CRITICAL
+🟡 48 warning
+ℹ️  60 info
+
+Clevious VPS: 44 findings
+  🔴 postgres.bind: :5432 missing 127.0.0.1 (post-reboot issue?)   ×4 critical
+  🟡 replication.standby: check failed                             ×40 warning
+JR_VPS_Orchestrators: 68 findings
+  🟡 recurring: clevious / health: check cold_storage timed out after 45s
+  🟡 recurring: clevious / journald: sshd kex_exchange_identification: Connection reset by peer   (×several)
+  ℹ️  recurring: hermes / journald: kernel [UFW BLOCK] ...   ×57 info
+```
+
+Individual `[FINDING]` messages "(via contabo_findings_sync)" are also arriving
+duplicated (same Contabo `postgres.bind` / `replication.standby` lines posted
+3–4× back-to-back at 09:00 p.m.).
+
+**Takeaways for a future session:**
+- The 4 CRITICAL + 40 warning from **Clevious VPS** are one root cause each:
+  Contabo Postgres not listening on `127.0.0.1:5432` after a reboot, which also
+  breaks the standby replication check. This is a **Clevious VPS / Contabo**
+  issue, not a Hermes-host issue — belongs to that project, but the noise is
+  flooding this bot's digest.
+- `contabo_findings_sync` appears to be **posting findings multiple times** —
+  worth checking for a dedup / cursor bug in whatever runs that sync.
+- None of this is the carried-forward item 2/1 work; it's a separate
+  cross-project observation. Good candidate to raise with Clevious VPS +
+  JR_VPS_Orchestrators owners.
