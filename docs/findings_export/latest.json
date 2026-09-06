@@ -1,8 +1,308 @@
 {
-  "generated_at": "2026-09-06T04:00:05.459670+00:00",
-  "mode": "quick",
-  "window_days": 8,
+  "generated_at": "2026-09-06T21:33:50.837097+00:00",
+  "mode": "deep",
+  "window_days": 35,
   "hermes_vps_log": [
+    {
+      "id": 241,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes-ingestor: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 242,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 243,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 244,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (11 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 245,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 246,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 247,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.hermes_v2: newest is 18.8h old",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 248,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.hermes_v2_log: newest is 18.8h old",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 249,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.hermes_vps_log: newest is 18.8h old",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 250,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.vps_orchestrator_findings: newest is 18.8h old",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 251,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "tls: expires in 42d",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 252,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "git.hermes-vps: in sync with origin/main (751541b)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 253,
+      "ts": "2026-09-06T21:33:46.535061+00:00",
+      "session_ref": "vps-healthcheck-deep-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "findings_log: hypertable healthy (unique idx valid, compression on, no retention)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 240,
+      "ts": "2026-09-06T21:31:23.297437+00:00",
+      "session_ref": "vps-guardrail-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail: all 17 checks OK",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 237,
+      "ts": "2026-09-06T21:31:22.925441+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "escalation: no unresolved CRITICAL findings",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 238,
+      "ts": "2026-09-06T21:31:22.925441+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail.heartbeat: fresh (0.0h)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 239,
+      "ts": "2026-09-06T21:31:22.925441+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "alert",
+      "severity": "critical",
+      "summary": "reconcile: 2 tg / 2 db WARNING+ in 24h \u2014 orphan_telegram=2 orphan_db=0 delivery_failed=0",
+      "detail": "orphan_telegram: uid=aa966a0d4d1b4aab94b7c75a05b74284 \"escalation: CEO ESCALATION (mirrored to GM ladder for CEO routing) \u2014 finding #227 unresolved for 26.0h \u2014 \"s17 SYNTHETIC v2 \u2014 delete me\"\"; orphan_telegram: uid=777d72f9a82f4d52a48796a7e2374e18 \"escalation: CEO ESCALATION (mirrored to GM ladder for CEO routing) \u2014 finding #227 unresolved for 26.0h \u2014 \"s17 SYNTHETIC v2 \u2014 delete me\"\"",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 235,
+      "ts": "2026-09-06T21:29:16.545150+00:00",
+      "session_ref": "vps-guardrail-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "timer.hermes-vps-guardrail.timer: inactive (debounce 1/2)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 236,
+      "ts": "2026-09-06T21:29:16.545150+00:00",
+      "session_ref": "vps-guardrail-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "timer.hermes-vps-escalation.timer: inactive (debounce 1/2)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 232,
+      "ts": "2026-09-06T21:29:15.490522+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "escalation: 1 open critical(s) below the 2h GM threshold",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 233,
+      "ts": "2026-09-06T21:29:15.490522+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail.heartbeat: absent, timer not enabled",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 234,
+      "ts": "2026-09-06T21:29:15.490522+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "reconcile: 1 tg / 3 db WARNING+ in 24h \u2014 orphan_telegram=0 orphan_db=0 delivery_failed=0",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 229,
+      "ts": "2026-09-06T21:28:59.464889+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail.heartbeat: absent, timer not enabled",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 230,
+      "ts": "2026-09-06T21:28:59.464889+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "reconcile: 0 tg / 2 db WARNING+ in 24h \u2014 orphan_telegram=0 orphan_db=0 delivery_failed=0",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 224,
+      "ts": "2026-09-06T21:28:34.539804+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "escalation: no unresolved CRITICAL findings",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 225,
+      "ts": "2026-09-06T21:28:34.539804+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail.heartbeat: absent, timer not enabled",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 226,
+      "ts": "2026-09-06T21:28:34.539804+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "reconcile: 0 tg / 2 db WARNING+ in 24h \u2014 orphan_telegram=0 orphan_db=0 delivery_failed=0",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 221,
+      "ts": "2026-09-06T21:28:33.815326+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "escalation: no unresolved CRITICAL findings",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 222,
+      "ts": "2026-09-06T21:28:33.815326+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "guardrail.heartbeat: absent, timer not enabled",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 223,
+      "ts": "2026-09-06T21:28:33.815326+00:00",
+      "session_ref": "vps-escalation-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "reconcile: 0 tg / 2 db WARNING+ in 24h \u2014 orphan_telegram=0 orphan_db=0 delivery_failed=0",
+      "detail": null,
+      "source": "hermes-vps"
+    },
     {
       "id": 173,
       "ts": "2026-09-06T04:00:02.110292+00:00",
@@ -244,16 +544,6 @@
       "source": "hermes-vps"
     },
     {
-      "id": 149,
-      "ts": "2026-09-06T01:17:21.851381+00:00",
-      "session_ref": "vps-healthcheck-quick-20260906",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "service.hermes_v2: inactive",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
       "id": 150,
       "ts": "2026-09-06T01:17:21.851381+00:00",
       "session_ref": "vps-healthcheck-quick-20260906",
@@ -271,16 +561,6 @@
       "severity": "info",
       "summary": "service.postgresql: active",
       "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 152,
-      "ts": "2026-09-06T01:17:21.851381+00:00",
-      "session_ref": "vps-healthcheck-quick-20260906",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: ok",
-      "detail": "unhealthy agents: {'fred_data': 'disabled'}",
       "source": "hermes-vps"
     },
     {
@@ -304,13 +584,23 @@
       "source": "hermes-vps"
     },
     {
-      "id": 143,
-      "ts": "2026-09-02T07:01:52.155764+00:00",
-      "session_ref": "vps-healthcheck-quick-20260902",
+      "id": 149,
+      "ts": "2026-09-06T01:17:21.851381+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
       "category": "finding",
       "severity": "critical",
       "summary": "service.hermes_v2: inactive",
-      "detail": null,
+      "detail": " [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 152,
+      "ts": "2026-09-06T01:17:21.851381+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: ok",
+      "detail": "unhealthy agents: {'fred_data': 'disabled'} [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
       "source": "hermes-vps"
     },
     {
@@ -334,16 +624,6 @@
       "source": "hermes-vps"
     },
     {
-      "id": 146,
-      "ts": "2026-09-02T07:01:52.155764+00:00",
-      "session_ref": "vps-healthcheck-quick-20260902",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: ok",
-      "detail": "unhealthy agents: {'fred_data': 'disabled'}",
-      "source": "hermes-vps"
-    },
-    {
       "id": 147,
       "ts": "2026-09-02T07:01:52.155764+00:00",
       "session_ref": "vps-healthcheck-quick-20260902",
@@ -364,22 +644,32 @@
       "source": "hermes-vps"
     },
     {
+      "id": 143,
+      "ts": "2026-09-02T07:01:52.155764+00:00",
+      "session_ref": "vps-healthcheck-quick-20260902",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "service.hermes_v2: inactive",
+      "detail": " [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 146,
+      "ts": "2026-09-02T07:01:52.155764+00:00",
+      "session_ref": "vps-healthcheck-quick-20260902",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: ok",
+      "detail": "unhealthy agents: {'fred_data': 'disabled'} [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
       "id": 140,
       "ts": "2026-09-02T07:00:25.883047+00:00",
       "session_ref": "vps-healthcheck-deep-20260902",
       "category": "finding",
       "severity": "info",
       "summary": "tls: expires in 47d",
-      "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 130,
-      "ts": "2026-09-02T07:00:25.883047+00:00",
-      "session_ref": "vps-healthcheck-deep-20260902",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "service.hermes_v2: inactive",
       "detail": null,
       "source": "hermes-vps"
     },
@@ -401,16 +691,6 @@
       "severity": "info",
       "summary": "service.postgresql: active",
       "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 133,
-      "ts": "2026-09-02T07:00:25.883047+00:00",
-      "session_ref": "vps-healthcheck-deep-20260902",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: ok",
-      "detail": "unhealthy agents: {'fred_data': 'disabled'}",
       "source": "hermes-vps"
     },
     {
@@ -494,13 +774,23 @@
       "source": "hermes-vps"
     },
     {
-      "id": 124,
-      "ts": "2026-09-02T07:00:03.865886+00:00",
-      "session_ref": "vps-healthcheck-quick-20260902",
+      "id": 130,
+      "ts": "2026-09-02T07:00:25.883047+00:00",
+      "session_ref": "vps-healthcheck-deep-20260902",
       "category": "finding",
       "severity": "critical",
       "summary": "service.hermes_v2: inactive",
-      "detail": null,
+      "detail": " [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 133,
+      "ts": "2026-09-02T07:00:25.883047+00:00",
+      "session_ref": "vps-healthcheck-deep-20260902",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: ok",
+      "detail": "unhealthy agents: {'fred_data': 'disabled'} [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
       "source": "hermes-vps"
     },
     {
@@ -524,16 +814,6 @@
       "source": "hermes-vps"
     },
     {
-      "id": 127,
-      "ts": "2026-09-02T07:00:03.865886+00:00",
-      "session_ref": "vps-healthcheck-quick-20260902",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: ok",
-      "detail": "unhealthy agents: {'fred_data': 'disabled'}",
-      "source": "hermes-vps"
-    },
-    {
       "id": 128,
       "ts": "2026-09-02T07:00:03.865886+00:00",
       "session_ref": "vps-healthcheck-quick-20260902",
@@ -554,13 +834,23 @@
       "source": "hermes-vps"
     },
     {
-      "id": 111,
-      "ts": "2026-09-01T04:15:05.798809+00:00",
-      "session_ref": "vps-healthcheck-deep-20260901",
+      "id": 124,
+      "ts": "2026-09-02T07:00:03.865886+00:00",
+      "session_ref": "vps-healthcheck-quick-20260902",
       "category": "finding",
       "severity": "critical",
       "summary": "service.hermes_v2: inactive",
-      "detail": null,
+      "detail": " [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 127,
+      "ts": "2026-09-02T07:00:03.865886+00:00",
+      "session_ref": "vps-healthcheck-quick-20260902",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: ok",
+      "detail": "unhealthy agents: {'fred_data': 'disabled'} [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
       "source": "hermes-vps"
     },
     {
@@ -581,16 +871,6 @@
       "severity": "info",
       "summary": "service.postgresql: active",
       "detail": null,
-      "source": "hermes-vps"
-    },
-    {
-      "id": 114,
-      "ts": "2026-09-01T04:15:05.798809+00:00",
-      "session_ref": "vps-healthcheck-deep-20260901",
-      "category": "finding",
-      "severity": "critical",
-      "summary": "api.health: degraded",
-      "detail": "unhealthy agents: {'fred_data': 'disabled', 'cvd_ingestion': 'degraded', 'multitf_aggregation': 'degraded'}",
       "source": "hermes-vps"
     },
     {
@@ -684,13 +964,33 @@
       "source": "hermes-vps"
     },
     {
+      "id": 111,
+      "ts": "2026-09-01T04:15:05.798809+00:00",
+      "session_ref": "vps-healthcheck-deep-20260901",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "service.hermes_v2: inactive",
+      "detail": " [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 114,
+      "ts": "2026-09-01T04:15:05.798809+00:00",
+      "session_ref": "vps-healthcheck-deep-20260901",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'fred_data': 'disabled', 'cvd_ingestion': 'degraded', 'multitf_aggregation': 'degraded'} [S17: verified-false \u2014 health-check false-CRITICAL bug (hermes_v2 in SYSTEMD_SERVICES / api.health severity-from-category), root cause fixed S13; matches GM S71 cross-project notice, unified-DB copies already no_action_needed]",
+      "source": "hermes-vps"
+    },
+    {
       "id": 105,
       "ts": "2026-08-30T04:00:02.235511+00:00",
       "session_ref": "vps-healthcheck-quick-20260830",
       "category": "finding",
       "severity": "critical",
       "summary": "service.hermes_v2: inactive",
-      "detail": null,
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     },
     {
@@ -700,7 +1000,7 @@
       "category": "finding",
       "severity": "info",
       "summary": "service.nginx: active",
-      "detail": null,
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     },
     {
@@ -710,7 +1010,7 @@
       "category": "finding",
       "severity": "info",
       "summary": "service.postgresql: active",
-      "detail": null,
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     },
     {
@@ -720,7 +1020,7 @@
       "category": "finding",
       "severity": "critical",
       "summary": "api.health: ok",
-      "detail": "unhealthy agents: {'fred_data': 'disabled'}",
+      "detail": "unhealthy agents: {'fred_data': 'disabled'} [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     },
     {
@@ -730,7 +1030,7 @@
       "category": "finding",
       "severity": "info",
       "summary": "replication: 1 standby(s), 0 bytes max lag",
-      "detail": null,
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     },
     {
@@ -740,7 +1040,1047 @@
       "category": "finding",
       "severity": "info",
       "summary": "ingestion.ohlcv_1m: 11 symbols current",
-      "detail": null,
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 99,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 100,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 101,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 102,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 103,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 104,
+      "ts": "2026-08-26T12:59:15.771764+00:00",
+      "session_ref": "S08-verify2",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 93,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 94,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 95,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 96,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting'} [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 97,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "error",
+      "severity": "critical",
+      "summary": "replication: check failed",
+      "detail": "connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nMultiple connection attempts failed. All failures were:\n- host: 'localhost', port: '5432', hostaddr: '::1': connection failed: connection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\n- host: 'localhost', port: '5432', hostaddr: '127.0.0.1': connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\" [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 98,
+      "ts": "2026-08-26T12:57:21.924285+00:00",
+      "session_ref": "S08-verify",
+      "category": "error",
+      "severity": "critical",
+      "summary": "ingestion.ohlcv_1m: check failed",
+      "detail": "connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nMultiple connection attempts failed. All failures were:\n- host: 'localhost', port: '5432', hostaddr: '::1': connection failed: connection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"::1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\n- host: 'localhost', port: '5432', hostaddr: '127.0.0.1': connection failed: connection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\"\nconnection to server at \"127.0.0.1\", port 5432 failed: FATAL:  password authentication failed for user \"hermes_v2\" [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 87,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 88,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 89,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 90,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 91,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 92,
+      "ts": "2026-08-26T11:34:14.383564+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 81,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 82,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 83,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 84,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 85,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 7408 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 86,
+      "ts": "2026-08-26T11:30:14.164468+00:00",
+      "session_ref": "vps-healthcheck-quick-20260826",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 75,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 76,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 77,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 78,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 79,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 80,
+      "ts": "2026-08-23T04:00:02.363839+00:00",
+      "session_ref": "vps-healthcheck-quick-20260823",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 69,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 70,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 71,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 72,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 73,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 74,
+      "ts": "2026-08-22T16:01:27.667521+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 63,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 64,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 65,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 66,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 67,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 68,
+      "ts": "2026-08-22T16:01:02.542576+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 57,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 58,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 59,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 60,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 61,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 62,
+      "ts": "2026-08-22T16:00:01.445430+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 51,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 52,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 53,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 54,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 55,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 56,
+      "ts": "2026-08-22T14:44:28.215266+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 45,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 46,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 47,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 48,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 49,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 50,
+      "ts": "2026-08-22T14:43:35.473297+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 39,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 40,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 41,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 42,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 43,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 44,
+      "ts": "2026-08-22T14:11:58.926675+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 33,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 34,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 35,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 36,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (20 agents)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 37,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 38,
+      "ts": "2026-08-22T11:28:44.996761+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 22,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 23,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 24,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 25,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting'} [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 26,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 3352 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 27,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 28,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.hermes_v2: newest is 8.1h old",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 29,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "backups.hermes_v2_log: newest is 8.1h old",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 30,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "backups.hermes_vps_log: no dump found yet in /opt/backups/hermes_vps_log",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 31,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "tls: expires in 58d",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 32,
+      "ts": "2026-08-22T10:50:57.321332+00:00",
+      "session_ref": "vps-healthcheck-deep-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "git: in sync with origin/main (b8947c7)",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 16,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 17,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 18,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 19,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'onchain_data': 'starting', 'fred_data': 'starting'} [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 20,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 45512 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 21,
+      "ts": "2026-08-22T10:50:36.386617+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 10,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes_v2: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 11,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 12,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 13,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "api.health: degraded",
+      "detail": "unhealthy agents: {'macro_data': 'starting', 'onchain_data': 'starting', 'fred_data': 'starting'} [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 14,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 29600 bytes max lag",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 15,
+      "ts": "2026-08-22T10:49:24.836710+00:00",
+      "session_ref": "vps-healthcheck-quick-20260822",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": " [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 1,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "VPS diagnostic: all systemd services healthy",
+      "detail": "hermes_v2.service active/running (restarted 07:45:12 UTC), nginx active 24h, postgresql active. Load avg 2.90, memory 29% used (2.1/7.6GB), disk 48% used (35/75GB), swap negligible (40MB/9GB). Uptime 9 days. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 2,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Database health confirmed",
+      "detail": "PostgreSQL 16.15 responding normally. hermes_v2 DB 2.7GB, hermes_v2_log 7.6MB. Replication: 1 standby connected, 0 bytes lag. signal_raw_log 391,465 rows, latest 2026-08-22 07:58:30 UTC. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 3,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Ingestion pipeline current for active symbols",
+      "detail": "BTC/ETH/BNB/SOL/XRP/ADA/AVAX/DOGE/BCH/PAXG/ONDO all updated to 2026-08-22 08:03:00 UTC. All 16 active agents report healthy via /health endpoint; 3 role_excluded as expected (training/audit/reporting on HERMES_ROLE=ingestion). [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 4,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "finding",
+      "severity": "warning",
+      "summary": "7 deprecated symbols stale in ohlcv_1m since S79 drop",
+      "detail": "TRX, DOT, LINK, TON, ICP, LTC, UNI last updated 2026-06-27 22:47 UTC (56 days stale). SHIB stale since 2026-06-03, NEXO since 2026-05-15. Non-blocking \u2014 disk usage healthy at 48%. Candidate for archival/pruning if space becomes constrained. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 5,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "finding",
+      "severity": "critical",
+      "summary": "findings_log infrastructure (S161) never deployed for Hermes VPS domain",
+      "detail": "S161 memory claimed a findings_log table was built/smoke-tested, but that table lived in hermes_v2_log (owned by the hermes_v2 tenant app, source=hermes-v2) \u2014 not a Hermes VPS (infrastructure/branch-manager) asset. No hermes_vps_log database existed at all prior to this session. RESOLVED same session: created hermes_vps_writer role, hermes_vps_log database, findings_log table (this table), credentials stored root-only at /root/.hermes_vps/.env (not in any git repo). [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 6,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "hermes_v2 service restart at 07:45:12 UTC investigated - benign",
+      "detail": "Clean systemd stop/start (not a crash - no failure exit codes, no OOM). Immediately preceded by a brief root SSH session (100.113.177.23 via Tailscale, 07:44:22-07:44:25 UTC, ~3sec). Consistent with a manual `systemctl restart hermes_v2` or short-lived deploy script. Not investigated further as low-risk. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 7,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Backups and TLS certificate current",
+      "detail": "hermes_v2 DB backup last ran 2026-08-22 02:42 UTC; hermes_v2_log backup 01:34 UTC. /etc/pg_backup.conf registered both databases correctly, remote dest Contabo 100.121.245.4, retention 2 local/7 remote. TLS cert (artek-studio.com) valid until 2026-10-19 (91 days remaining), auto-renews via certbot.timer + dns-01/Cloudflare. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 8,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "API security posture confirmed healthy",
+      "detail": "Nginx rate-limiting (zone api_general) actively blocking bot scan traffic (WordPress/PHP exploit probes from 93.123.109.95, 20+ req/burst). API layer correctly returns 401 for all unauthenticated bot payloads. No successful unauthorized access observed in logs. [S17 backfill: pre-Tier4 row, retro-closed]",
+      "source": "hermes-vps"
+    },
+    {
+      "id": 9,
+      "ts": "2026-08-22T08:26:32.569877+00:00",
+      "session_ref": "S178",
+      "category": "note",
+      "severity": "info",
+      "summary": "Git repo clean and in sync",
+      "detail": "Branch main, working tree clean, HEAD=9835c9b (S177: TradingView integration discontinued), local matches origin/main exactly. [S17 backfill: pre-Tier4 row, retro-closed]",
       "source": "hermes-vps"
     }
   ]
