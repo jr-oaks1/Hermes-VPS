@@ -38,6 +38,19 @@ systemd-analyze verify \
   /etc/systemd/system/hermes-vps-escalation.timer
 echo "   ok"
 
+echo "== 3b. StartLimitBurst must clear the timer cadence (S17: Burst=8 vs 12/h tripped start-limit-hit) =="
+for pair in "guardrail:5" "escalation:15"; do
+  unit=${pair%%:*}; mins=${pair##*:}
+  per_hour=$(( 60 / mins + 1 ))          # +1 for the boundary run
+  burst=$(systemctl show "hermes-vps-$unit.service" -p StartLimitBurst --value)
+  interval=$(systemctl show "hermes-vps-$unit.service" -p StartLimitIntervalUSec --value)
+  if [ "$interval" = "1h" ] && [ "${burst:-0}" -le "$per_hour" ]; then
+    echo "   FAIL: hermes-vps-$unit Burst=$burst <= ${per_hour}/h — will hit start-limit within the hour"
+    exit 1
+  fi
+  echo "   ok: hermes-vps-$unit Burst=$burst > ${per_hour}/h"
+done
+
 echo "== 4. start once, prove the heartbeat =="
 systemctl start hermes-vps-guardrail.service
 test -f /var/lib/hermes-vps/guardrail.heartbeat

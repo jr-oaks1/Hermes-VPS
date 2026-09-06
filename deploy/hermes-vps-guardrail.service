@@ -5,8 +5,11 @@ After=network-online.target postgresql.service
 Wants=network-online.target
 PartOf=hermes-vps-guardrail.timer
 # T0.2 — a oneshot under a 5-min timer can still thrash; make a crash loop terminal.
+# NB: a HEALTHY 5-min timer legitimately starts 12×/hour — Burst MUST clear that
+# with headroom (S17: Burst=8 tripped `start-limit-hit` after ~1h of normal runs).
+# 20/hour = 12 normal + 8 spare; a real restart loop blows past 20 in seconds.
 StartLimitIntervalSec=3600
-StartLimitBurst=8
+StartLimitBurst=20
 
 [Service]
 Type=oneshot

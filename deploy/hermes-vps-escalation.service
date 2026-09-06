@@ -4,8 +4,10 @@ Documentation=https://github.com/jr-oaks1/Hermes-VPS
 After=network-online.target postgresql.service
 Wants=network-online.target
 PartOf=hermes-vps-escalation.timer
+# A healthy 15-min timer starts 4×/hour — Burst=10 clears that with headroom (see
+# the guardrail unit's note; S17 sized these to the timer cadence, not a flat 5).
 StartLimitIntervalSec=3600
-StartLimitBurst=5
+StartLimitBurst=10
 
 [Service]
 Type=oneshot
