@@ -1,8 +1,68 @@
 {
-  "generated_at": "2026-09-06T03:29:14.348338+00:00",
+  "generated_at": "2026-09-06T04:00:05.459670+00:00",
   "mode": "quick",
   "window_days": 8,
   "hermes_vps_log": [
+    {
+      "id": 173,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.hermes-ingestor: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 174,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.nginx: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 175,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "service.postgresql: active",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 176,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "api.health: ok (11 agents)",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 177,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "replication: 1 standby(s), 0 bytes max lag",
+      "detail": null,
+      "source": "hermes-vps"
+    },
+    {
+      "id": 178,
+      "ts": "2026-09-06T04:00:02.110292+00:00",
+      "session_ref": "vps-healthcheck-quick-20260906",
+      "category": "finding",
+      "severity": "info",
+      "summary": "ingestion.ohlcv_1m: 11 symbols current",
+      "detail": null,
+      "source": "hermes-vps"
+    },
     {
       "id": 167,
       "ts": "2026-09-06T03:28:56.190063+00:00",
