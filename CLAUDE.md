@@ -12,18 +12,42 @@ this project didn't exist yet.
 **Scope — what lives here:**
 - Host-level recurring health checks (`scripts/audit/hermes_vps_health_check.py`,
   weekly quick / monthly deep, writes to `hermes_vps_log.findings_log`)
+- **Observability tiers (S17, 2026-09-06) — all live on the Hetzner host:**
+  - **Tier 3 guardrail** `scripts/audit/hermes_vps_guardrail.py` — read-only,
+    boot + every 5 min (`hermes-vps-guardrail.timer`), N=2 debounce, success
+    heartbeat at `/var/lib/hermes-vps/guardrail.heartbeat` (Rule T3.10)
+  - **Tier 4 escalation** `scripts/audit/hermes_vps_escalation_check.py` — every
+    15 min (`hermes-vps-escalation.timer`); durable ladder over
+    `hermes_vps_log.findings_log` (`action_status` + `escalated_gm_at`/
+    `escalated_ceo_at`), row-is-the-state; also runs the heartbeat-staleness
+    check and the T-LOG.2 reconciliation each cycle
+  - **`scripts/log_finding.py`** — the ONLY place allowed to call Telegram or
+    `INSERT INTO findings_log`. CLI (ad-hoc T-LOG.1 findings) + importable. Every
+    warning/alert path routes through it (T-LOG.2).
+  - `scripts/deploy_guardrail.sh` — the T3.11 deployment assertion; run it on the
+    host after any guardrail/escalation change before enabling the timers.
+- 🔴 **`hermes_vps_log.findings_log` is a TimescaleDB hypertable (S17)** — 1-month
+  chunks, compression after 90 days, **NO retention policy, ever** (Rule T-LOG.3 —
+  it is the permanent continuous-improvement record; bound cost with compression,
+  never DELETE). One-time migration: `deploy/sql/S17_findings_log_tier4.sql`.
+  Runtime role `hermes_vps` is not the table owner — schema changes need
+  `sudo -u postgres`.
 - systemd units for those checks (`deploy/hermes-vps-healthcheck-weekly.*`,
-  `deploy/hermes-vps-audit-monthly.*`)
-- nginx (`deploy/nginx.conf` — the single host-wide config; still contains
-  `hermes_v2`'s app-specific `location`/`root` blocks inline, since nginx only
-  runs once per host and someone has to own the whole file)
-- Host metrics monitoring. **Current reality (verified S13, 2026-09-05): the
+  `deploy/hermes-vps-audit-monthly.*`, `deploy/hermes-vps-daily-digest.*`,
+  `deploy/hermes-vps-guardrail.*`, `deploy/hermes-vps-escalation.*` — all 5
+  service units carry `StartLimitIntervalSec=`/`Burst=` per Tier 0 rule T0.2)
+- nginx (`deploy/nginx.conf` — the single host-wide config, deployed to
+  `/etc/nginx/sites-enabled/hermes-vps`; still contains the crypto-signals
+  dashboard proxy inline, since nginx only runs once per host. S17: `location = /`
+  root repointed `/opt/hermes_v2/public` → `/opt/hermes-vps/public/index.html`
+  (a neutral holding page in `public/`) — this cleared the last nginx blocker on
+  the `/opt/hermes_v2` teardown)
+- Host metrics monitoring. **Current reality (verified S13, re-confirmed S17): the
   live stack is `netdata`** (systemd `netdata`, active, local API on
   `127.0.0.1:19999`). **Prometheus is installed-but-disabled+inactive and
-  Grafana is not installed at all** — the in-repo `deploy/prometheus.*`,
-  `deploy/grafana/` and `deploy/setup_monitoring.sh` are retained as
-  infra-as-code for a possible future re-deploy but do NOT reflect what's
-  running. Don't treat them as live config.
+  Grafana is not installed at all** — the in-repo Prometheus/Grafana files were
+  **archived to `deploy/_archived/` in S17** (their alert thresholds moved into
+  the Tier 3 guardrail). Not live config.
 - UFW firewall snapshots (`deploy/firewall/`)
 - The Hermes VPS Telegram bot (`@JRHermesVPSBot` / `Clevious_Hermes_Bot`,
   credentials in `/root/.hermes_vps/.env`) and its infra-level alert routing
@@ -121,4 +145,7 @@ recent linked here once it exists.
 
 > ## 🟢 S16 — All pendings closed or escalated for ownership transfer (2026-09-06)
 > **Clevious VPS S50 parity (🟠) shaped + replied:** new binding bullet in `HERMES_PLATFORM_STANDARD.md` §3 R5 — replication-critical Postgres params (`max_connections`/`max_worker_processes`/`max_wal_senders`/`max_prepared_transactions`/`max_locks_per_transaction`) must bump the Contabo standby to matching-or-higher in the *same session*; detection accepted with **Clevious VPS owning** the primary↔standby diff-check on the Contabo Tier-1 watch; standby headroom bump ack'd. **hermes_v2 residue fully escalated to JR Hermes Ingestor** — one ESCALATION notice (pushed to `s27-s28-audit-fixes`) hands over all 5 items: `/opt/hermes_v2` teardown (5 units), `hermes_v2` DB drop (2.7 GB), the S15 `sentiment` grant, Ingestor's `backup-pre-s*` dirs (~1.76 GB), dead `prometheus.service` path. **`orphaned-s59` (1.1 GB) escalated to JR Basic Crypto Signals.** Three host actions **staged but SSH-blocked** by the auto-mode classifier: delete `temp_recovery_s23-pre-drop-s14.dump` (1.2 GB, **user pre-approved, no grace period**), sync `/opt/HERMES_PLATFORM_STANDARD.md`, final host verification. See `docs/sessions/S16-HANDOFF.md` for full detail. Also **codified CONTINUOUS_IMPROVEMENT_STANDARD.md §5f Rule T-LOG.2** (user directive) — every automated WARNING/ALERT event must be dual-written (findings log + Telegram), all projects, next session forward; JR Hermes VPS carries the first compliance audit (S17). 7th cross-project re-affirmation of `#Interaction NN` numbering. All 4 sibling repos synced/pushed. See `docs/sessions/S16-HANDOFF.md` §3 + §6.
+
+> ## 🟢 S17 — Full observability build + all S16 pendings closed; host at peak health (2026-09-06)
+> Auto mode off, full SSH. **S16 staged items done:** 1.2 GB safety dump deleted (disk 58%→56%), 3 workspace standards synced to `/opt/`, final host verification. **T-LOG.2 compliance audit:** 9 stderr-only warning paths found in the health check + digest; all routed through a new single dual-write sink `scripts/log_finding.py` (`event_uid` correlation, write-ahead outbox journal, self-reports on partial failure); digest ported psycopg2→psycopg3. **Tier 4 built + live:** `deploy/sql/S17_findings_log_tier4.sql` (action_status ladder + `findings_log` → TimescaleDB hypertable, 1-month chunks, compression after 90d, **NO retention — Rule T-LOG.3**, user directive replicated platform-wide), `hermes_vps_escalation_check.py` (15-min timer, row-is-the-state, S71 in_progress+owner relief, GM-ladder mirror). **Tier 3 built + live:** `hermes_vps_guardrail.py` (boot + 5-min, read-only, N=2 debounce, T3.10 heartbeat), `deploy_guardrail.sh` (T3.11). **Tier 0:** `StartLimit*` on all 5 units. **Smoke test caught a real escalation/reconcile feedback loop before go-live** — fixed to summary-only emission. **nginx:** `location = /` repointed off `/opt/hermes_v2/public` → new neutral `public/index.html` (before/after `curl` identical; clears the last nginx blocker on the hermes_v2 teardown). Archived the never-live Prometheus/Grafana tree to `deploy/_archived/`. Branch: `main` now default, `master` deleted. **Final: `is-system-running`=running, 0 failed units, 0 open criticals, replication streaming/0, disk 56%, 5 timers scheduled.** Test rows that leaked to the GM's unified DB during smoke tests were cleaned (GM notice sent). See `docs/sessions/S17-HANDOFF.md`.
 ---
