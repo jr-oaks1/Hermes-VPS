@@ -244,6 +244,57 @@ def check_tls_expiry() -> list[Finding]:
     return findings
 
 
+def check_findings_hypertable_integrity(vps_log_db_url: str) -> list[Finding]:
+    """T3.12 for findings_log (a TimescaleDB hypertable since S17): assert the
+    parent-level unique index is valid, a compression policy exists, and NO
+    retention policy exists (Rule T-LOG.3 — the log is permanent)."""
+    findings = []
+    try:
+        with psycopg.connect(vps_log_db_url, connect_timeout=10) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT count(*) FROM timescaledb_information.hypertables
+                    WHERE hypertable_name = 'findings_log'
+                """)
+                if cur.fetchone()[0] == 0:
+                    findings.append(Finding("finding", "warning",
+                        "findings_log: not a hypertable (S17 migration not applied?)"))
+                    return findings
+                cur.execute("""
+                    SELECT count(*) FROM pg_index i
+                    JOIN pg_class c ON c.oid = i.indexrelid
+                    WHERE c.relname = 'findings_log_event_uid_ts_uidx' AND i.indisvalid
+                """)
+                uidx_ok = cur.fetchone()[0] == 1
+                cur.execute("""
+                    SELECT count(*) FROM timescaledb_information.jobs
+                    WHERE proc_name LIKE '%retention%'
+                      AND hypertable_name = 'findings_log'
+                """)
+                retention_jobs = cur.fetchone()[0]
+                cur.execute("""
+                    SELECT count(*) FROM timescaledb_information.jobs
+                    WHERE proc_name LIKE '%compression%'
+                      AND hypertable_name = 'findings_log'
+                """)
+                compression_jobs = cur.fetchone()[0]
+        if retention_jobs:
+            findings.append(Finding("alert", "critical",
+                "findings_log: a RETENTION policy exists — Rule T-LOG.3 forbids it, the log is permanent"))
+        if not uidx_ok:
+            findings.append(Finding("finding", "warning",
+                "findings_log: event_uid unique index missing or invalid"))
+        if not compression_jobs:
+            findings.append(Finding("finding", "warning",
+                "findings_log: no compression policy (expected compress_after 90d)"))
+        if not findings:
+            findings.append(Finding("finding", "info",
+                "findings_log: hypertable healthy (unique idx valid, compression on, no retention)"))
+    except Exception as e:
+        findings.append(Finding("error", "warning", "findings_log: hypertable check failed", str(e)))
+    return findings
+
+
 def check_git_sync(repo_dir: str) -> list[Finding]:
     """Checks one repo's local-vs-origin sync. S13: now only this project's own
     /opt/hermes-vps deploy clone -- the /opt/hermes_v2 check was dropped with the
@@ -499,6 +550,7 @@ def main() -> int:
         findings += check_backup_currency()
         findings += check_tls_expiry()
         findings += check_git_sync("/opt/hermes-vps")
+        findings += check_findings_hypertable_integrity(vps_log_db_url)
 
     # Single dual-write: findings_log + @JRHermesVPSBot, one call, per-event
     # correlated (event_uid), self-reporting on partial failure (T-LOG.2).
