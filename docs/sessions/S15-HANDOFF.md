@@ -18,7 +18,25 @@ correctly deferred (fresh safety copy) — documented below, not left ambiguous.
 `is-system-running` = `running`, disk 58% (31 GB free), replication
 `streaming/async/0` lag.
 
-Remaining items, all genuinely not-this-project-to-force:
+Remaining items:
+
+0. **NEW inbound — Clevious VPS S50 standby parameter-parity (🟠, this project's
+   to shape).** Landed via a concurrent session's commit
+   (`d2be0f0`/`d1fcb64`, 2026-09-06 01:29), *not* actioned in S15 —
+   `docs/CROSS-PROJECT-NOTICE-2026-09-06-clevious-s50-standby-parameter-parity-recurred.md`.
+   The 2026-09-05 max_locks parity gap **recurred the same day** on
+   `max_connections`/`max_worker_processes`; Contabo standby crash-looped
+   ~00:52–02:55 UTC, manually recovered by Clevious (standby `max_connections`
+   →120, `max_worker_processes`→32). Live now: healthy, but
+   `max_wal_senders` (10/10) and `max_locks_per_transaction` (512/512) have
+   **zero standby headroom** — next primary-side bump of either halts standby
+   replay identically. Asks JR Hermes VPS for: (1) a parity-discipline
+   checklist line (primary-side Postgres tuning runbook and/or
+   `HERMES_PLATFORM_STANDARD.md`) — bump the standby in the *same session*,
+   ideally above primary; (2) a primary↔standby param-diff check that alerts on
+   `standby < primary` (Clevious offered to own it on the Contabo side).
+   Clevious will also proactively raise the two zero-headroom standby params
+   with an ack. **S16: decide + reply to the notice.**
 
 1. **`/opt/hermes_v2` teardown** — still hard-blocked. Verified live this
    session: `bronze-audit-daily`, `funnel_scoring`, `server_health_audit`,
@@ -129,8 +147,11 @@ owned tables `hermes_v2` can no longer read should be re-granted or left
 
 ## 4. Open items for S16
 
-All cross-project or time-gated — none actionable from JR Hermes VPS alone:
-
+- **Clevious VPS S50 standby parameter-parity (🟠)** — see Quick Resume §0.
+  This one *is* JR Hermes VPS's to shape (own the primary + the platform
+  standard). Decide on the parity checklist line + the diff-check owner, and
+  reply to the notice. Not started in S15 — arrived via a concurrent commit
+  during wrap-up.
 - **`/opt/hermes_v2` teardown** — needs a hermes_v2/Ingestor decommission
   decision to migrate/retire `bronze-audit-daily`, `funnel_scoring`,
   `server_health_audit`, `walk_forward_monitor`, `prometheus.service`.
