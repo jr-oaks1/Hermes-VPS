@@ -15,6 +15,10 @@ Requires (from environment — EnvironmentFile= in the systemd unit):
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   (Hermes VPS bot)
 
 Exit codes: 0 = success, 1 = DB error, 2 = Telegram error, 3 = config error.
+
+S17: ported psycopg2 -> psycopg3 (repo-wide standardization); DB and Telegram
+failure paths now dual-write a finding via scripts/log_finding.py (T-LOG.2 —
+the digest silently stopping was itself an unlogged warning-grade event).
 """
 
 from __future__ import annotations
@@ -24,38 +28,36 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 
-try:
-    import psycopg2
-    import psycopg2.extras
-    import requests
-except ImportError as e:
-    print(f"error: missing dependency: {e}", file=sys.stderr)
-    sys.exit(3)
+import psycopg
+from psycopg.rows import dict_row
+import requests
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo/scripts
+from log_finding import log_finding  # noqa: E402
+
+_SESSION = f"vps-digest-{datetime.now(timezone.utc):%Y%m%d}"
 
 
-def query_findings_past_24h(db_url: str) -> list[dict]:
+def query_findings_past_24h(db_url: str) -> list[dict] | None:
     """Query vps_orchestrator_findings for past 24 hours."""
     try:
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
-        cur.execute(
-            """
-            SELECT ts, source_project, severity, category, summary
-            FROM findings_log
-            WHERE ts >= %s
-            ORDER BY ts DESC
-            """,
-            (cutoff,)
-        )
-
-        findings = cur.fetchall()
-        cur.close()
-        conn.close()
-        return [dict(f) for f in findings]
+        with psycopg.connect(db_url, connect_timeout=10) as conn:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(
+                    """
+                    SELECT ts, source_project, severity, category, summary
+                    FROM findings_log
+                    WHERE ts >= %s
+                    ORDER BY ts DESC
+                    """,
+                    (cutoff,),
+                )
+                return [dict(r) for r in cur.fetchall()]
     except Exception as e:
         print(f"error: database query failed: {e}", file=sys.stderr)
+        log_finding("error", "warning", "digest: findings query failed",
+                    detail=str(e), session_ref=_SESSION)
         return None
 
 
@@ -117,9 +119,13 @@ def send_telegram(bot_token: str, chat_id: str, text: str) -> bool:
         )
         if not resp.ok:
             print(f"error: telegram send failed: HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
+            log_finding("error", "warning", "digest: Telegram send failed",
+                        detail=f"HTTP {resp.status_code}", session_ref=_SESSION)
         return resp.ok
     except Exception as e:
         print(f"error: telegram send failed: {e}", file=sys.stderr)
+        log_finding("error", "warning", "digest: Telegram send raised",
+                    detail=str(e), session_ref=_SESSION)
         return False
 
 

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>artek-studio.com</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0f1115;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d7dbe0;
+    }
+    .container { text-align: center; max-width: 520px; padding: 40px; }
+    h1 { font-size: 32px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 12px; }
+    p.sub { color: #8b929c; font-size: 15px; line-height: 1.6; margin-bottom: 28px; }
+    .badge {
+      display: inline-block; padding: 6px 14px; font-size: 13px; font-weight: 600;
+      color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.4);
+      background: rgba(74, 222, 128, 0.08); border-radius: 999px;
+    }
+    .links { margin-top: 32px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .links a {
+      color: #6b7280; text-decoration: none; font-size: 12px; padding: 5px 12px;
+      border: 1px solid #2a2f37; border-radius: 4px;
+      font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .links a:hover { color: #9ca3af; border-color: #3f4650; }
+    .footer { margin-top: 56px; font-size: 12px; color: #4b5058; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>artek-studio.com</h1>
+    <p class="sub">Private infrastructure host. Nothing to see here.</p>
+    <span class="badge">operational</span>
+    <div class="links">
+      <a href="/health">GET /health</a>
+      <a href="/metrics">GET /metrics</a>
+    </div>
+    <div class="footer">
+      <p>Served by Hermes VPS (Hetzner)</p>
+    </div>
+  </div>
+</body>
+</html>

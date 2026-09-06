@@ -2,6 +2,9 @@
 Description=JR Hermes VPS — Daily operational digest
 After=network.target
 ConditionPathExists=/opt/hermes-vps
+# T0.2 (S17)
+StartLimitIntervalSec=3600
+StartLimitBurst=5
 
 [Service]
 Type=oneshot

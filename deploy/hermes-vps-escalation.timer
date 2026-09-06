@@ -1,0 +1,13 @@
+[Unit]
+Description=Run the Hermes VPS Tier 4 escalation check every 15 minutes
+Requires=hermes-vps-escalation.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target

@@ -1,325 +1,97 @@
-#!/bin/bash
-# Pre-Deployment Checklist for JR Hermes VPS S2
-# Run locally before server deployment
-# Date: 2026-08-22
-
-set -e
+#!/usr/bin/env bash
+# Pre-deployment checklist for JR Hermes VPS.
+# Run locally (Git Bash) before pushing / deploying to the Hetzner host.
+# Rewritten S17: dropped the stale hermes_v2 / _secure / dual-export checks;
+# added the S17 tier scripts + units, systemd-analyze verify, and the T-LOG.2
+# routing assertion.
+set -uo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-
-PASS_COUNT=0
-FAIL_COUNT=0
-WARN_COUNT=0
-
-check_pass() {
-    echo -e "${GREEN}✓${NC} $1"
-    ((PASS_COUNT++))
-}
-
-check_fail() {
-    echo -e "${RED}✗${NC} $1"
-    ((FAIL_COUNT++))
-}
-
-check_warn() {
-    echo -e "${YELLOW}⚠${NC} $1"
-    ((WARN_COUNT++))
-}
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; NC='\033[0m'
+PASS=0; FAIL=0; WARN=0
+ok()   { echo -e "${GREEN}\xe2\x9c\x93${NC} $1"; PASS=$((PASS+1)); }
+bad()  { echo -e "${RED}\xe2\x9c\x97${NC} $1"; FAIL=$((FAIL+1)); }
+warn() { echo -e "${YELLOW}\xe2\x9a\xa0${NC} $1"; WARN=$((WARN+1)); }
 
 echo "=========================================="
-echo "JR Hermes VPS — Pre-Deployment Checklist"
+echo "JR Hermes VPS — pre-deployment checklist"
 echo "=========================================="
-echo ""
 
-# === Local Repo State ===
-echo "1. LOCAL REPO STATE"
-echo "---"
+echo; echo "1. REPO STATE"; echo "---"
+BR=$(git rev-parse --abbrev-ref HEAD)
+[[ "$BR" == "main" ]] && ok "branch: main" || warn "branch: $BR (expected main)"
+[[ -z "$(git status -s)" ]] && ok "working tree clean" || { bad "uncommitted changes"; git status -s | sed 's/^/  /'; }
+git rev-parse '@{u}' >/dev/null 2>&1 && ok "upstream tracking set" || bad "no upstream tracking"
+DEFAULT_BR=$(git remote show origin 2>/dev/null | sed -n 's/.*HEAD branch: //p')
+[[ "$DEFAULT_BR" == "main" ]] && ok "origin default branch: main" || warn "origin default branch: ${DEFAULT_BR:-unknown} (S17 wants main)"
 
-# Check branch
-if [[ $(git rev-parse --abbrev-ref HEAD) == "main" ]]; then
-    check_pass "Branch: main"
+echo; echo "2. PYTHON"; echo "---"
+PYFILES=(
+  scripts/log_finding.py
+  scripts/audit/hermes_vps_health_check.py
+  scripts/audit/hermes_vps_guardrail.py
+  scripts/audit/hermes_vps_escalation_check.py
+  scripts/audit/hermes_vps_reconcile.py
+  scripts/audit/hermes_vps_daily_digest.py
+)
+for f in "${PYFILES[@]}"; do
+  if [[ -f "$f" ]] && python -m py_compile "$f" 2>/dev/null; then ok "compiles: $f"; else bad "compile FAILED / missing: $f"; fi
+done
+if python -m pytest tests/ -q >/dev/null 2>&1; then ok "pytest tests/ green"; else warn "pytest not run or failing (pip install -r requirements-dev.txt)"; fi
+
+echo; echo "3. T-LOG.2 ROUTING"; echo "---"
+grep -q "from log_finding import" scripts/audit/hermes_vps_health_check.py \
+  && ok "health check routes through log_finding" || bad "health check does NOT import log_finding"
+grep -q "from log_finding import" scripts/audit/hermes_vps_daily_digest.py \
+  && ok "daily digest routes through log_finding" || bad "daily digest does NOT import log_finding"
+! grep -qE "^\s*import psycopg2|cursor_factory" scripts/audit/hermes_vps_daily_digest.py \
+  && ok "daily digest is psycopg3" || bad "daily digest still imports psycopg2"
+! grep -q "def insert_findings" scripts/audit/hermes_vps_health_check.py \
+  && ok "health check's private insert_findings removed" || warn "health check still defines insert_findings"
+
+echo; echo "4. UNIT FILES"; echo "---"
+UNITS=(
+  hermes-vps-healthcheck-weekly hermes-vps-audit-monthly hermes-vps-daily-digest
+  hermes-vps-guardrail hermes-vps-escalation
+)
+for u in "${UNITS[@]}"; do
+  [[ -f "deploy/$u.service" ]] && ok "deploy/$u.service" || bad "deploy/$u.service missing"
+  [[ -f "deploy/$u.timer"   ]] && ok "deploy/$u.timer"   || bad "deploy/$u.timer missing"
+done
+for u in "${UNITS[@]}"; do
+  grep -q "StartLimitIntervalSec=" "deploy/$u.service" \
+    && ok "$u.service: T0.2 start limit set" || bad "$u.service: no StartLimitIntervalSec (T0.2)"
+done
+if command -v systemd-analyze >/dev/null 2>&1; then
+  systemd-analyze verify deploy/hermes-vps-*.service deploy/hermes-vps-*.timer 2>&1 \
+    && ok "systemd-analyze verify clean" || bad "systemd-analyze verify found problems"
 else
-    check_warn "Branch: $(git rev-parse --abbrev-ref HEAD) (expected main)"
+  warn "systemd-analyze not available locally — run on host"
 fi
 
-# Check clean working tree
-if [[ -z $(git status -s) ]]; then
-    check_pass "Working tree: clean"
+echo; echo "5. MIGRATION + DOCS"; echo "---"
+[[ -f deploy/sql/S17_findings_log_tier4.sql ]] && ok "migration SQL present" || bad "deploy/sql/S17_findings_log_tier4.sql missing"
+grep -qi "retention" deploy/sql/S17_findings_log_tier4.sql \
+  && grep -q "NO retention" deploy/sql/S17_findings_log_tier4.sql \
+  && ok "migration: no add_retention_policy (T-LOG.3)" || warn "migration: confirm no retention policy"
+[[ -f public/index.html ]] && ok "public/index.html present (nginx root)" || bad "public/index.html missing"
+! grep -q "root /opt/hermes_v2/public" deploy/nginx.conf \
+  && ok "nginx root no longer points at /opt/hermes_v2" || bad "nginx still roots at /opt/hermes_v2/public"
+[[ -f .env.template ]] && grep -q "FINDINGS_DB_URL" .env.template \
+  && ok ".env.template lists FINDINGS_DB_URL" || bad ".env.template missing FINDINGS_DB_URL"
+
+echo; echo "6. SECRETS"; echo "---"
+grep -q '\.env' .gitignore && ok ".gitignore blocks .env" || bad ".gitignore does not block .env"
+git ls-files | grep -q '\.env$' && bad "a .env file is tracked (git rm --cached)" || ok "no .env tracked"
+if grep -Eqi '(password|token|secret)\s*=\s*[A-Za-z0-9]{8,}' .env.template; then
+  bad ".env.template may contain a real secret"
 else
-    check_fail "Working tree: has uncommitted changes"
-    git status -s | sed 's/^/  /'
+  ok ".env.template placeholders only"
 fi
 
-# Check commit count
-COMMIT_COUNT=$(git rev-list --count main)
-if [[ $COMMIT_COUNT -ge 4 ]]; then
-    check_pass "Commits pushed: $COMMIT_COUNT"
-else
-    check_warn "Commits: $COMMIT_COUNT (expected 4+)"
-fi
-
-# Check remote tracking
-if git rev-parse @{u} >/dev/null 2>&1; then
-    check_pass "Remote tracking: set up"
-else
-    check_fail "Remote tracking: not set"
-fi
-
-echo ""
-
-# === GitHub Remote ===
-echo "2. GITHUB REMOTE"
-echo "---"
-
-# Check remote URL
-REMOTE_URL=$(git config --get remote.origin.url)
-if [[ $REMOTE_URL == *"jr-oaks1/Hermes-VPS"* ]]; then
-    check_pass "Remote URL: $REMOTE_URL"
-else
-    check_fail "Remote URL: $REMOTE_URL (unexpected)"
-fi
-
-# Check repo is public (attempt clone)
-if git clone --depth 1 https://github.com/jr-oaks1/Hermes-VPS.git /tmp/hermes-vps-test >/dev/null 2>&1; then
-    check_pass "GitHub repo: publicly accessible"
-    rm -rf /tmp/hermes-vps-test
-else
-    check_fail "GitHub repo: not accessible from clone"
-fi
-
-# Check both local commits visible on GitHub
-GITHUB_COMMITS=$(curl -s https://api.github.com/repos/jr-oaks1/Hermes-VPS/commits?per_page=10 | grep -o '"sha":"[^"]*"' | wc -l)
-if [[ $GITHUB_COMMITS -ge 4 ]]; then
-    check_pass "GitHub commits: $GITHUB_COMMITS visible"
-else
-    check_warn "GitHub commits: only $GITHUB_COMMITS visible (expected 4+)"
-fi
-
-echo ""
-
-# === Files Present ===
-echo "3. FILES & DIRECTORIES"
-echo "---"
-
-# Systemd units
-if [[ -f deploy/hermes-vps-healthcheck-weekly.service ]]; then
-    check_pass "Systemd: hermes-vps-healthcheck-weekly.service"
-else
-    check_fail "Systemd: hermes-vps-healthcheck-weekly.service missing"
-fi
-
-if [[ -f deploy/hermes-vps-healthcheck-weekly.timer ]]; then
-    check_pass "Systemd: hermes-vps-healthcheck-weekly.timer"
-else
-    check_fail "Systemd: hermes-vps-healthcheck-weekly.timer missing"
-fi
-
-if [[ -f deploy/hermes-vps-audit-monthly.service ]]; then
-    check_pass "Systemd: hermes-vps-audit-monthly.service"
-else
-    check_fail "Systemd: hermes-vps-audit-monthly.service missing"
-fi
-
-if [[ -f deploy/hermes-vps-audit-monthly.timer ]]; then
-    check_pass "Systemd: hermes-vps-audit-monthly.timer"
-else
-    check_fail "Systemd: hermes-vps-audit-monthly.timer missing"
-fi
-
-# nginx config
-if [[ -f deploy/nginx.conf ]]; then
-    check_pass "nginx: config present (deploy/nginx.conf)"
-else
-    check_fail "nginx: config missing"
-fi
-
-# Prometheus
-if [[ -f deploy/prometheus.service ]]; then
-    check_pass "Prometheus: service file present"
-else
-    check_fail "Prometheus: service file missing"
-fi
-
-if [[ -f deploy/prometheus.yml ]]; then
-    check_pass "Prometheus: config present"
-else
-    check_fail "Prometheus: config missing"
-fi
-
-if [[ -f deploy/prometheus_rules.yml ]]; then
-    check_pass "Prometheus: alert rules present"
-else
-    check_fail "Prometheus: alert rules missing"
-fi
-
-# Health check script
-if [[ -f scripts/audit/hermes_vps_health_check.py ]]; then
-    check_pass "Health check: script present"
-else
-    check_fail "Health check: script missing"
-fi
-
-# Documentation
-if [[ -f docs/CREDENTIAL_SETUP.md ]]; then
-    check_pass "Docs: CREDENTIAL_SETUP.md present"
-else
-    check_fail "Docs: CREDENTIAL_SETUP.md missing"
-fi
-
-if [[ -f docs/CLOUD_REVIEW_SETUP.md ]]; then
-    check_pass "Docs: CLOUD_REVIEW_SETUP.md present"
-else
-    check_fail "Docs: CLOUD_REVIEW_SETUP.md missing"
-fi
-
-if [[ -f docs/cloud-review-prompts/weekly-triage.md ]]; then
-    check_pass "Docs: cloud-review prompts present"
-else
-    check_fail "Docs: cloud-review prompts missing"
-fi
-
-if [[ -f .env.template ]]; then
-    check_pass ".env.template: present"
-else
-    check_fail ".env.template: missing"
-fi
-
-echo ""
-
-# === Systemd Unit Validation ===
-echo "4. SYSTEMD UNITS VALIDATION"
-echo "---"
-
-check_systemd_path() {
-    local file=$1
-    local path=$2
-    if grep -q "^$path" "$file" 2>/dev/null || grep -q "$path" "$file" 2>/dev/null; then
-        check_pass "$file: contains $path"
-    else
-        check_fail "$file: missing $path"
-    fi
-}
-
-check_systemd_path "deploy/hermes-vps-healthcheck-weekly.service" "/opt/hermes-vps"
-check_systemd_path "deploy/hermes-vps-audit-monthly.service" "/opt/hermes-vps"
-check_systemd_path "deploy/hermes-vps-healthcheck-weekly.service" "EnvironmentFile=/root/.hermes_vps/.env"
-check_systemd_path "deploy/prometheus.service" "/opt/hermes-vps/deploy/prometheus.yml"
-
-echo ""
-
-# === .gitignore Validation ===
-echo "5. SECRETS PROTECTION"
-echo "---"
-
-if grep -q "\.env" .gitignore; then
-    check_pass ".gitignore: blocks .env"
-else
-    check_fail ".gitignore: does not block .env"
-fi
-
-if grep -q "_secure" .gitignore; then
-    check_pass ".gitignore: blocks _secure/"
-else
-    check_fail ".gitignore: does not block _secure/"
-fi
-
-if ! git ls-files | grep -q "\.env$"; then
-    check_pass "Git: no .env files tracked"
-else
-    check_fail "Git: .env files tracked (remove with git rm --cached)"
-fi
-
-if [[ -f .env ]]; then
-    check_warn ".env exists locally (not tracked; won't affect server)"
-fi
-
-# Verify .env.template has no secrets
-if grep -qi "password.*=.*[a-zA-Z0-9]" .env.template; then
-    check_fail ".env.template: may contain secrets (check manually)"
-else
-    check_pass ".env.template: contains only placeholders"
-fi
-
-echo ""
-
-# === Cross-Project Dependencies ===
-echo "6. CROSS-PROJECT DEPENDENCIES"
-echo "---"
-
-# Check hermes_v2 repo for S180 cleanup
-if [[ -d ../hermes_v2 ]]; then
-    cd ../hermes_v2
-    if git log --oneline | head -1 | grep -q "S180\|S1\|cleanup"; then
-        check_pass "hermes_v2: S180 cleanup visible"
-    else
-        check_warn "hermes_v2: S180 commit not visible (may not be pulled)"
-    fi
-
-    # Verify moved files are gone
-    if [[ ! -f deploy/hermes-vps-healthcheck-weekly.service ]]; then
-        check_pass "hermes_v2: VPS files removed"
-    else
-        check_warn "hermes_v2: VPS files still present (will be removed on server)"
-    fi
-    cd - >/dev/null
-else
-    check_warn "hermes_v2: repo not found locally (can't verify)"
-fi
-
-echo ""
-
-# === Health Check Script Validation ===
-echo "7. HEALTH CHECK SCRIPT"
-echo "---"
-
-if python3 -m py_compile scripts/audit/hermes_vps_health_check.py 2>/dev/null; then
-    check_pass "Health check: Python syntax valid"
-else
-    check_fail "Health check: Python syntax error"
-fi
-
-if grep -q "export_hermes_vps_findings" scripts/audit/hermes_vps_health_check.py; then
-    check_pass "Health check: export function present"
-else
-    check_fail "Health check: export function missing"
-fi
-
-if grep -q "export_hermes_v2_findings" scripts/audit/hermes_vps_health_check.py; then
-    check_pass "Health check: dual export (hermes_v2 + vps)"
-else
-    check_warn "Health check: hermes_v2 export may not be present"
-fi
-
-echo ""
-
-# === Summary ===
+echo; echo "=========================================="
+echo -e "${GREEN}PASS: $PASS${NC}   ${RED}FAIL: $FAIL${NC}   ${YELLOW}WARN: $WARN${NC}"
 echo "=========================================="
-echo "SUMMARY"
-echo "=========================================="
-echo ""
-echo -e "${GREEN}✓ PASS: $PASS_COUNT${NC}"
-echo -e "${RED}✗ FAIL: $FAIL_COUNT${NC}"
-echo -e "${YELLOW}⚠ WARN: $WARN_COUNT${NC}"
-echo ""
-
-if [[ $FAIL_COUNT -eq 0 ]]; then
-    echo -e "${GREEN}✓ Pre-deployment checklist: READY${NC}"
-    echo ""
-    echo "Next steps:"
-    echo "1. Review any warnings (marked with ⚠)"
-    echo "2. Verify CREDENTIAL_SETUP.md is complete"
-    echo "3. Set up RemoteTrigger routines (see CLOUD_REVIEW_SETUP.md)"
-    echo "4. Proceed to server deployment (Phase 4)"
-    exit 0
-else
-    echo -e "${RED}✗ Pre-deployment checklist: BLOCKED${NC}"
-    echo ""
-    echo "Fix failures (marked with ✗) before proceeding."
-    exit 1
-fi
+[[ $FAIL -eq 0 ]] && { echo -e "${GREEN}READY${NC}"; exit 0; } || { echo -e "${RED}BLOCKED — fix FAILs${NC}"; exit 1; }

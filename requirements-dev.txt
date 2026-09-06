@@ -1,0 +1,3 @@
+# Dev/test only — NOT installed in the deploy venv (/opt/hermes-vps/.venv).
+# Runtime deps (psycopg[binary], requests, urllib3) are in the deploy venv already.
+pytest>=8.0

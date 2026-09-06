@@ -1,0 +1,27 @@
+[Unit]
+Description=Hermes VPS — Tier 4 durable escalation ladder + guardrail heartbeat staleness + T-LOG.2 reconciliation
+Documentation=https://github.com/jr-oaks1/Hermes-VPS
+After=network-online.target postgresql.service
+Wants=network-online.target
+PartOf=hermes-vps-escalation.timer
+StartLimitIntervalSec=3600
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/hermes-vps
+EnvironmentFile=/root/.hermes_vps/.env
+StateDirectory=hermes-vps
+StateDirectoryMode=0750
+ExecStartPre=/usr/bin/install -d -m 0750 /opt/hermes-vps/logs
+ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_escalation_check.py
+StandardOutput=append:/opt/hermes-vps/logs/hermes_vps_escalation.log
+StandardError=append:/opt/hermes-vps/logs/hermes_vps_escalation.log
+SupplementaryGroups=postgres
+PrivateTmp=true
+NoNewPrivileges=true
+TimeoutStartSec=90
+
+[Install]
+WantedBy=multi-user.target

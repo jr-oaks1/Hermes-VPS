@@ -1,0 +1,15 @@
+[Unit]
+Description=Run the Hermes VPS Tier 3 guardrail at boot and every 5 minutes
+Requires=hermes-vps-guardrail.service
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+# Deliberately NOT Persistent: a 5-min guardrail catching up after downtime is
+# noise, not signal (opposite call from the weekly/monthly units).
+Persistent=false
+AccuracySec=30s
+RandomizedDelaySec=15
+
+[Install]
+WantedBy=timers.target

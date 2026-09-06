@@ -3,10 +3,11 @@ Description=JR Hermes VPS — Daily digest timer (09:00 UTC)
 Requires=hermes-vps-daily-digest.service
 
 [Timer]
-OnBootSec=30s
-OnUnitActiveSec=24h
+# S17: was OnBootSec=30s + OnUnitActiveSec=24h + OnCalendar=09:00 — three
+# triggers that drift and double-send. One calendar trigger, catch up if missed.
 OnCalendar=*-*-* 09:00:00 UTC
 Persistent=true
+AccuracySec=5min
 
 [Install]
 WantedBy=timers.target

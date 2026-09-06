@@ -44,12 +44,18 @@ import json
 import os
 import subprocess
 import sys
-from dataclasses import dataclass
 from datetime import datetime, timezone
 
 import psycopg
 import requests
 import urllib3
+
+# S17: the Finding dataclass and all findings_log / Telegram writes now live in
+# the shared dual-write helper (T-LOG.2 — every warning/alert event is written to
+# findings_log AND @JRHermesVPSBot, in one call). This module only produces
+# Finding objects; log_findings() is the single sink.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # repo/scripts
+from log_finding import Finding, log_findings, log_finding  # noqa: E402
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -60,14 +66,6 @@ PG_BACKUP_CONF = "/etc/pg_backup.conf"
 # hermes-ingestor is the live app on this host (hermes_v2.service decommissioned
 # 2026-08-26; listing it here produced a false CRITICAL every run until S13).
 SYSTEMD_SERVICES = ("hermes-ingestor", "nginx", "postgresql")
-
-
-@dataclass
-class Finding:
-    category: str   # finding | error | note | alert
-    severity: str    # info | warning | critical
-    summary: str
-    detail: str = ""
 
 
 def check_systemd_services() -> list[Finding]:
@@ -274,20 +272,6 @@ def check_git_sync(repo_dir: str) -> list[Finding]:
     return findings
 
 
-def insert_findings(db_url: str, session_ref: str, findings: list[Finding]) -> None:
-    with psycopg.connect(db_url) as conn:
-        with conn.cursor() as cur:
-            for f in findings:
-                cur.execute(
-                    """
-                    INSERT INTO findings_log (session_ref, category, severity, summary, detail, source)
-                    VALUES (%s, %s, %s, %s, %s, 'hermes-vps')
-                    """,
-                    (session_ref, f.category, f.severity, f.summary, f.detail or None),
-                )
-        conn.commit()
-
-
 def _fetch_findings_window(db_url: str, window_days: int) -> list | dict:
     if not db_url:
         return {"error": "no connection string configured"}
@@ -334,15 +318,17 @@ def _sync_repo_to_origin(repo_dir: str) -> bool:
         ).stdout.strip().splitlines()
         foreign = [s for s in local_only if not s.startswith(_EXPORT_COMMIT_PREFIX)]
         if foreign:
-            print(f"repo sync ({label}): {len(foreign)} non-export local commit(s) "
-                  f"present ({foreign[0]!r}...) — skipping export, needs manual review",
-                  file=sys.stderr)
+            msg = (f"findings-export: {len(foreign)} non-export local commit(s) on {label} "
+                   f"— export skipped, needs manual review")
+            print(msg + f" ({foreign[0]!r}...)", file=sys.stderr)
+            log_finding("finding", "warning", f"export.{label}: sync blocked", detail=msg)
             return False
         subprocess.run(["git", "-C", repo_dir, "reset", "--hard", "origin/main"],
                        timeout=30, check=True, capture_output=True)
         return True
     except Exception as e:
         print(f"repo sync ({label}): failed: {e}", file=sys.stderr)
+        log_finding("error", "warning", f"export.{label}: repo sync failed", detail=str(e))
         return False
 
 
@@ -371,8 +357,11 @@ def _commit_and_push_export(repo_dir: str, export_path: str, mode: str, label: s
                            check=False, capture_output=True)
             print(f"findings export ({label}): push failed, commit rolled back: {e}",
                   file=sys.stderr)
+            log_finding("error", "warning", f"export.{label}: push failed",
+                        detail=f"commit rolled back; cloud-review feed will go stale: {e}")
     except Exception as e:
         print(f"findings export ({label}): git commit failed: {e}", file=sys.stderr)
+        log_finding("error", "warning", f"export.{label}: git commit failed", detail=str(e))
 
 
 def export_hermes_vps_findings(mode: str, vps_log_db_url: str, repo_dir: str = "/opt/hermes-vps") -> None:
@@ -398,31 +387,78 @@ def export_hermes_vps_findings(mode: str, vps_log_db_url: str, repo_dir: str = "
     _commit_and_push_export(repo_dir, export_path, mode, "hermes_vps_log")
 
 
-def send_telegram_summary(bot_token: str, chat_id: str, mode: str, findings: list[Finding]) -> bool:
+def _summary_header(mode: str, findings: list[Finding]) -> str:
+    """The 🔴/🟡/✅ run header. S17: message body + delivery is log_findings()'s
+    job; this only supplies the header line so that UX is preserved."""
     n_crit = sum(1 for f in findings if f.severity == "critical")
     n_warn = sum(1 for f in findings if f.severity == "warning")
     label = "Monthly forensic audit" if mode == "deep" else "Weekly health check"
     if n_crit:
-        head = f"🔴 {label} — {n_crit} CRITICAL, {n_warn} warning"
-    elif n_warn:
-        head = f"🟡 {label} — {n_warn} warning(s), rest OK"
-    else:
-        head = f"✅ {label} — all {len(findings)} checks OK"
-    lines = [head]
-    for f in findings:
-        if f.severity != "info":
-            marker = "🔴" if f.severity == "critical" else "🟡"
-            lines.append(f"{marker} {f.summary}")
-    text = "\n".join(lines)
+        return f"🔴 {label} — {n_crit} CRITICAL, {n_warn} warning"
+    if n_warn:
+        return f"🟡 {label} — {n_warn} warning(s), rest OK"
+    return f"✅ {label} — all {len(findings)} checks OK"
+
+
+def _send_allclear(mode: str, findings: list[Finding]) -> None:
+    """log_findings() only messages WARNING+; an all-INFO run still gets its
+    reassuring ✅ line (the health check has always sent one every run)."""
+    if any(f.severity != "info" for f in findings):
+        return
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not (bot_token and chat_id):
+        return
     try:
-        resp = requests.post(
+        requests.post(
             f"https://api.telegram.org/bot{bot_token}/sendMessage",
-            json={"chat_id": chat_id, "text": text},
+            json={"chat_id": chat_id, "text": _summary_header(mode, findings) + "\n(hermes-vps)"},
             timeout=15,
         )
-        return resp.ok
     except Exception:
-        return False
+        pass
+
+
+_GM_MIRROR = "/opt/jrvps-orchestrator/scripts/log_operational_finding.py"
+
+
+def _mirror_to_unified_db(findings: list[Finding], session_ref: str) -> None:
+    """Shell each finding to the GM-owned log_operational_finding.py so JR Hermes
+    VPS findings reach vps_orchestrator_findings (GM monthly synthesis + GM
+    EscalationCheck). S17: rc is now captured — a mirror failure becomes a
+    warning finding via log_finding() instead of a silent stderr line."""
+    if not os.environ.get("FINDINGS_DB_URL"):
+        log_finding("finding", "warning",
+                    "mirror: FINDINGS_DB_URL not set — unified-DB mirror skipped",
+                    detail="JR Hermes VPS findings will not reach the GM's synthesis / EscalationCheck",
+                    session_ref=session_ref)
+        return
+    if not os.path.exists(_GM_MIRROR):
+        log_finding("finding", "warning", f"mirror: GM script missing at {_GM_MIRROR}",
+                    session_ref=session_ref)
+        return
+    fails = 0
+    for f in findings:
+        cmd = [
+            "/opt/hermes-vps/.venv/bin/python3", _GM_MIRROR,
+            "--source_project", "JR Hermes VPS",
+            "--severity", f.severity, "--category", f.category, "--summary", f.summary,
+        ]
+        if f.detail:
+            cmd += ["--detail", f.detail]
+        if session_ref:
+            cmd += ["--session", session_ref]
+        if f.severity == "info":
+            cmd.append("--no-telegram")
+        try:
+            r = subprocess.run(cmd, check=False, timeout=30, capture_output=True, text=True)
+            if r.returncode != 0:
+                fails += 1
+        except Exception:
+            fails += 1
+    if fails:
+        log_finding("error", "warning", f"mirror: {fails}/{len(findings)} unified-DB writes failed",
+                    session_ref=session_ref)
 
 
 def main() -> int:
@@ -436,8 +472,21 @@ def main() -> int:
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
 
+    session_ref = args.session_ref or f"vps-healthcheck-{args.mode}-{datetime.now(timezone.utc):%Y%m%d}"
+
     if not database_url or not vps_log_db_url:
-        print("DATABASE_URL / HERMES_VPS_LOG_DB_URL not set", file=sys.stderr)
+        # T-LOG.2 violation-by-design: can't write findings_log without its DSN —
+        # but Telegram is still reachable. Page, then exit.
+        msg = "config: DATABASE_URL / HERMES_VPS_LOG_DB_URL not set — health check cannot run"
+        print(msg, file=sys.stderr)
+        if bot_token and chat_id:
+            try:
+                requests.post(
+                    f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                    json={"chat_id": chat_id, "text": f"🔴 {msg}\n(hermes-vps)"}, timeout=10,
+                )
+            except Exception:
+                pass
         return 2
 
     findings: list[Finding] = []
@@ -451,49 +500,19 @@ def main() -> int:
         findings += check_tls_expiry()
         findings += check_git_sync("/opt/hermes-vps")
 
-    session_ref = args.session_ref or f"vps-healthcheck-{args.mode}-{datetime.now(timezone.utc):%Y%m%d}"
-    insert_findings(vps_log_db_url, session_ref, findings)
+    # Single dual-write: findings_log + @JRHermesVPSBot, one call, per-event
+    # correlated (event_uid), self-reporting on partial failure (T-LOG.2).
+    log_findings(findings, session_ref=session_ref,
+                 header=_summary_header(args.mode, findings))
+    _send_allclear(args.mode, findings)
 
-    # Dual-write to unified findings DB (S6)
-    # Skip if FINDINGS_DB_URL not set (backward compatible with older deployments)
-    findings_db_url = os.environ.get("FINDINGS_DB_URL", "")
-    if findings_db_url:
-        import subprocess
-        for f in findings:
-            # Map severity for routing table compliance
-            # Only send CRITICAL/WARNING to Telegram (from log_operational_finding.py)
-            try:
-                cmd = [
-                    "/opt/hermes-vps/.venv/bin/python3", "/opt/jrvps-orchestrator/scripts/log_operational_finding.py",
-                    "--source_project", "JR Hermes VPS",
-                    "--severity", f.severity,
-                    "--category", f.category,
-                    "--summary", f.summary,
-                ]
-                if f.detail:
-                    cmd.extend(["--detail", f.detail])
-                if session_ref:
-                    cmd.extend(["--session", session_ref])
-
-                # Skip Telegram if INFO (only CRITICAL/WARNING alert)
-                if f.severity == "info":
-                    cmd.append("--no-telegram")
-
-                subprocess.run(cmd, check=False, timeout=30)
-            except Exception as e:
-                print(f"warning: dual-write to unified DB failed for finding '{f.summary}': {e}", file=sys.stderr)
-    else:
-        if findings:  # Only log if there are findings to write
-            print("warning: FINDINGS_DB_URL not set — unified DB logging skipped", file=sys.stderr)
+    # Mirror to the unified findings DB (feeds the GM's monthly synthesis + the
+    # GM's own EscalationCheck). Best-effort — but a failure is now a finding,
+    # not a swallowed stderr line.
+    _mirror_to_unified_db(findings, session_ref)
 
     for f in findings:
         print(f"[{f.severity.upper()}] {f.category}.{f.summary}" + (f" — {f.detail}" if f.detail else ""))
-
-    if bot_token and chat_id:
-        sent = send_telegram_summary(bot_token, chat_id, args.mode, findings)
-        print(f"telegram_sent={sent}")
-    else:
-        print("telegram skipped: TELEGRAM_BOT_TOKEN/CHAT_ID not set", file=sys.stderr)
 
     export_hermes_vps_findings(args.mode, vps_log_db_url)
 

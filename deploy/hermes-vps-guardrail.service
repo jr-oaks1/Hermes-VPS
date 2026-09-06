@@ -1,0 +1,30 @@
+[Unit]
+Description=Hermes VPS — Tier 3 preventive guardrail (read-only: services, PG writability, disk/mem, netdata, TLS, nginx root)
+Documentation=https://github.com/jr-oaks1/Hermes-VPS
+After=network-online.target postgresql.service
+Wants=network-online.target
+PartOf=hermes-vps-guardrail.timer
+# T0.2 — a oneshot under a 5-min timer can still thrash; make a crash loop terminal.
+StartLimitIntervalSec=3600
+StartLimitBurst=8
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/hermes-vps
+EnvironmentFile=/root/.hermes_vps/.env
+# T0.3 — StateDirectory gives /var/lib/hermes-vps 0750 root:root without a
+# ReadWritePaths trap. Holds guardrail.heartbeat, guardrail_state.json, telegram_outbox.jsonl.
+StateDirectory=hermes-vps
+StateDirectoryMode=0750
+ExecStartPre=/usr/bin/install -d -m 0750 /opt/hermes-vps/logs
+ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_guardrail.py
+StandardOutput=append:/opt/hermes-vps/logs/hermes_vps_guardrail.log
+StandardError=append:/opt/hermes-vps/logs/hermes_vps_guardrail.log
+SupplementaryGroups=postgres
+PrivateTmp=true
+NoNewPrivileges=true
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

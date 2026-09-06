@@ -4,6 +4,9 @@ Documentation=https://github.com/jr-oaks1/Hermes-VPS
 After=network-online.target postgresql.service hermes-ingestor.service
 Wants=network-online.target
 PartOf=hermes-vps-audit-monthly.timer
+# T0.2 (S17)
+StartLimitIntervalSec=3600
+StartLimitBurst=5
 
 [Service]
 Type=oneshot
@@ -14,6 +17,8 @@ WorkingDirectory=/opt/hermes-vps
 # The old secondary EnvironmentFile=/opt/hermes_v2/.env was dropped S13 (2026-09-05):
 # hermes_v2 is decommissioned and that path is a single point of failure.
 EnvironmentFile=/root/.hermes_vps/.env
+# T0.3 (S17)
+ExecStartPre=/usr/bin/install -d -m 0750 /opt/hermes-vps/logs
 ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_health_check.py --mode deep
 StandardOutput=append:/opt/hermes-vps/logs/hermes_vps_audit_monthly.log
 StandardError=append:/opt/hermes-vps/logs/hermes_vps_audit_monthly.log
