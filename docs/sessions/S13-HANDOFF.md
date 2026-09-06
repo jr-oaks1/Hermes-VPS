@@ -46,6 +46,17 @@ The S11 daily-digest fix was stranded as an uncommitted on-disk edit.
 - **Verified:** post-run `git status` clean, `ahead/behind 0/0`, findings export
   committed **and pushed** cleanly (`26e1dc1`, `fdc25e2`).
 
+### Deliverables (workspace three-tier convention)
+- **Artifact report:** <https://claude.ai/code/artifact/dbc35a1d-6cb7-4d9d-b15f-4976057186ae>
+  — severity-ranked forensic report. Source committed at
+  `docs/audits/S13-forensic-audit.html` (`7d79486`).
+- **Handoff:** this file.
+- **Memory:** `memory/s13_forensic_audit_p1_remediation.md` + `MEMORY.md` index;
+  new cross-project `ground_rule_auto_mode_block_ping_first.md` propagated to all
+  14 project memory dirs + workspace `CLAUDE.md`; `ground_rule_interaction_numbering.md`
+  re-affirmed and propagated to the last 3 dirs that lacked a local copy.
+- **Obsidian:** `ObsidianVault/Projects/JR Hermes VPS.md` — S13 section appended.
+
 ### Bonus (safe, self-contained)
 - `hermes-vps-*.service` (all 3 units): dropped the fragile secondary
   `EnvironmentFile=…/opt/hermes_v2/.env`. **Verified live** that
