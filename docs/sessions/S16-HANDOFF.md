@@ -23,8 +23,8 @@ Cross-project notices sent this session (all committed):
 | To | File | Ask |
 |---|---|---|
 | JR Hermes Ingestor | `.../docs/CROSS-PROJECT-NOTICE-2026-09-06-jr-hermes-vps-s16-ESCALATION-hermes-v2-teardown-ownership.md` (pushed to `s27-s28-audit-fixes`) | Take ownership of all 5 remaining hermes_v2 teardown items |
-| JR Basic Crypto Signals | `.../docs/CROSS-PROJECT-NOTICE-2026-09-06-jr-hermes-vps-s16-ESCALATION-orphaned-offsite-copy.md` (local commit `c0cac70`) | Delete / authorize / keep `crypto_signals_offsite.orphaned-s59` (1.1 GB) |
-| Clevious VPS | `.../CROSS-PROJECT-NOTICE-REPLY-2026-09-06-jr-hermes-vps-s16-standby-parameter-parity.md` (local commit `0d68e59`) | Reply to S50: parity rule codified, Clevious owns detection, headroom bump ack'd |
+| JR Basic Crypto Signals | `.../docs/CROSS-PROJECT-NOTICE-2026-09-06-jr-hermes-vps-s16-ESCALATION-orphaned-offsite-copy.md` (commit `c0cac70`, **pushed** to `crypto-signals` `main`) | Delete / authorize / keep `crypto_signals_offsite.orphaned-s59` (1.1 GB) |
+| Clevious VPS | `.../CROSS-PROJECT-NOTICE-REPLY-2026-09-06-jr-hermes-vps-s16-standby-parameter-parity.md` (commit `0d68e59`, **pushed** to `clevious-vps` `master`) | Reply to S50: parity rule codified, Clevious owns detection, headroom bump ack'd |
 
 Copies of all three are also in `JR Hermes VPS/docs/`.
 
@@ -92,24 +92,32 @@ auto-mode classifier this session. One message sent to the user to disable auto 
 ## 4. Session side effects (disclosure)
 
 - No host changes (SSH blocked). No DB changes. No reboots.
-- `HERMES_PLATFORM_STANDARD.md` (workspace root, OneDrive-synced, not git-tracked) —
-  R5 parity bullet added.
-- 3 cross-project commits in sibling repos. The Basic Crypto Signals commit
-  (`c0cac70`) also swept in two pre-existing untracked inbound notice files
-  (`...2026-09-04-findings-log-practice.md`, `...2026-09-05-hermes-ingestor-S31-ownership-change.md`)
-  that were sitting uncommitted in its `docs/` — benign (they belong in the repo),
-  disclosed here for the record.
-- Did **not** push Clevious VPS or Basic Crypto Signals — both had unpushed commits
-  from concurrent sessions and OneDrive propagation is sufficient for notice
-  delivery. Only JR Hermes Ingestor was pushed (my commit was the only unpushed one).
+- **Workspace-root standards docs edited (OneDrive-synced, not git-tracked):**
+  `HERMES_PLATFORM_STANDARD.md` R5 parity bullet; `CONTINUOUS_IMPROVEMENT_STANDARD.md`
+  §5f Rule T-LOG.2 + banner line; `INTERACTION_NUMBERING_STANDARD.md` 7th re-affirmation.
+  All three have `/opt/` copies on Hetzner that now need the same edits synced (SSH-blocked
+  — added to §3 / §5).
+- 4 repos synced (all pushed): JR Hermes VPS `main` (`be428e5`), JR Hermes Ingestor
+  `s27-s28-audit-fixes` (`8901398`), Clevious VPS `master` (`0d68e59`), Basic Crypto
+  Signals `main` (`c0cac70`).
+- The Clevious `master` push also carried 2 finished commits from a concurrent S50
+  session (`06a19ac`, `e99ba22` — Contabo reboot + Tier-1 watch rewrite) that were
+  committed-but-unpushed; fast-forward, no divergence. The Basic Crypto Signals commit
+  (`c0cac70`) also swept in 2 pre-existing untracked inbound notice files in its `docs/`
+  — benign, they belong in the repo. Both disclosed for the record.
 
 ## 5. Open items for S17
 
-- **§3 items 1–3** — the moment SSH is available.
+- **§3 items 1–3** — the moment SSH is available (delete 1.2 GB dump [user pre-approved],
+  sync `/opt/HERMES_PLATFORM_STANDARD.md`, final host verify). **Add:** sync
+  `/opt/CONTINUOUS_IMPROVEMENT_STANDARD.md` (T-LOG.2) and `/opt/INTERACTION_NUMBERING_STANDARD.md`
+  on Hetzner too — same SSH session.
 - **Await replies:** Ingestor escalation (5 items), BCS escalation (orphaned-s59),
-  Clevious detection-live confirmation.
-- Once Clevious confirms the diff-check is live, add it to `HERMES_PLATFORM_STANDARD.md`
-  R5 as the named detection control (currently written as "accepted S16").
+  Clevious detection-live confirmation + standby headroom bump.
+- Once Clevious confirms the diff-check is live, name it in `HERMES_PLATFORM_STANDARD.md`
+  R5 as the detection control (currently "accepted S16").
+- **§6 backlog** — Tier 4 escalation, Tier 3 full cadence, T-LOG.2 compliance audit (§6a-bis),
+  Hetzner Branch Manager self-report endpoint (§6b, GM clarification first).
 
 ## 6. Standing backlog surfaced from the platform standards (S16, logged not actioned)
 
