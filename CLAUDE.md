@@ -20,10 +20,19 @@ this project didn't exist yet.
     15 min (`hermes-vps-escalation.timer`); durable ladder over
     `hermes_vps_log.findings_log` (`action_status` + `escalated_gm_at`/
     `escalated_ceo_at`), row-is-the-state; also runs the heartbeat-staleness
-    check and the T-LOG.2 reconciliation each cycle
+    check and the T-LOG.2 reconciliation each cycle. **S18: shares the
+    guardrail's emission gate (`scripts/emission_state.py`, `debounce_default=1`) —
+    steady-state INFO is throttled to state-change + one hourly roll-up; a real
+    WARNING/CRITICAL still emits on its first cycle. `--dry-run` added.**
+  - **`scripts/emission_state.py` (S18)** — shared `throttle()` used by both the
+    guardrail and the escalation check: N-cycle debounce + INFO-only-on-state-change
+    + one hourly all-clear. Deliberately NOT inside `log_finding.py` (the sink must
+    never suppress).
   - **`scripts/log_finding.py`** — the ONLY place allowed to call Telegram or
     `INSERT INTO findings_log`. CLI (ad-hoc T-LOG.1 findings) + importable. Every
-    warning/alert path routes through it (T-LOG.2).
+    warning/alert path routes through it (T-LOG.2). **S18: `initial_action_status()`
+    — INFO enters `no_action_needed`, WARNING/CRITICAL enters `open`, so "open"
+    means actionable (was: everything took the DB default `open`).**
   - `scripts/deploy_guardrail.sh` — the T3.11 deployment assertion; run it on the
     host after any guardrail/escalation change before enabling the timers.
 - 🔴 **`hermes_vps_log.findings_log` is a TimescaleDB hypertable (S17)** — 1-month
@@ -148,4 +157,7 @@ recent linked here once it exists.
 
 > ## 🟢 S17 — Full observability build + all S16 pendings closed; host at peak health (2026-09-06)
 > Auto mode off, full SSH. **S16 staged items done:** 1.2 GB safety dump deleted (disk 58%→56%), 3 workspace standards synced to `/opt/`, final host verification. **T-LOG.2 compliance audit:** 9 stderr-only warning paths found in the health check + digest; all routed through a new single dual-write sink `scripts/log_finding.py` (`event_uid` correlation, write-ahead outbox journal, self-reports on partial failure); digest ported psycopg2→psycopg3. **Tier 4 built + live:** `deploy/sql/S17_findings_log_tier4.sql` (action_status ladder + `findings_log` → TimescaleDB hypertable, 1-month chunks, compression after 90d, **NO retention — Rule T-LOG.3**, user directive replicated platform-wide), `hermes_vps_escalation_check.py` (15-min timer, row-is-the-state, S71 in_progress+owner relief, GM-ladder mirror). **Tier 3 built + live:** `hermes_vps_guardrail.py` (boot + 5-min, read-only, N=2 debounce, T3.10 heartbeat), `deploy_guardrail.sh` (T3.11). **Tier 0:** `StartLimit*` on all 5 units. **Smoke test caught a real escalation/reconcile feedback loop before go-live** — fixed to summary-only emission. **nginx:** `location = /` repointed off `/opt/hermes_v2/public` → new neutral `public/index.html` (before/after `curl` identical; clears the last nginx blocker on the hermes_v2 teardown). Archived the never-live Prometheus/Grafana tree to `deploy/_archived/`. Branch: `main` now default, `master` deleted. **Final: `is-system-running`=running, 0 failed units, 0 open criticals, replication streaming/0, disk 56%, 5 timers scheduled.** Test rows that leaked to the GM's unified DB during smoke tests were cleaned (GM notice sent). See `docs/sessions/S17-HANDOFF.md`.
+
+> ## 🟢 S18 — Escalation-check INFO emission bounded; all owned paperwork closed (2026-09-06)
+> The S17 first-check surfaced a real defect: the Tier 4 escalation check wrote **3 INFO rows every 15-min cycle unconditionally** (288/day) into the no-retention `findings_log`, and `insert_findings` never named `action_status` so every row (INFO included) took the DB default `open` — "0 open actionable findings" had drifted 86→111 and was climbing. Fixed: extracted the guardrail's emission gate to `scripts/emission_state.py` (shared `throttle()`), wired into the escalation check with `debounce_default=1` (a real WARNING/CRITICAL still emits on cycle 1), added `initial_action_status()` to `log_finding.py` (INFO→`no_action_needed`), `deploy/sql/S18_findings_log_info_settle.sql` settled the 111 pre-fix rows (state update only — T-LOG.3), 4 new `deploy_guardrail.sh` assertions, 11 new tests. Staged + smoke-tested in a host `git worktree`, then deployed: **emission 288/day → ~24/day, 0 `open` rows of any severity, host `running`.** Paperwork: Clevious S44 unattended-upgrades **decided** (accept upgrades / gate reboots — `HERMES_PLATFORM_STANDARD.md` R5 + `/opt` synced); GM S75+S71 **closed** (remediated S13/S17, live-confirmed); Clevious S40 `:5434` **handed back** (needs a Contabo reboot). See `docs/sessions/S18-HANDOFF.md`.
 ---
