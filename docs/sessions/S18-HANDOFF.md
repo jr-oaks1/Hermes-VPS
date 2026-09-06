@@ -150,12 +150,20 @@ for each project to pick up (matches how inbound notices reached us).
 | `deploy_guardrail.sh` (8 steps) | all pass |
 | SQL migration | `UPDATE 111`; open-INFO = 0; retention jobs = 0 |
 | Live emission rate | 288/day → ~24/day |
+| **23:45 UTC real timer fire** | **emitted 0 rows** (steady state, within-hour, roll-up spent) — live timer path confirmed |
 | `open` rows on host | 0 (all severities) |
 | `is-system-running` / failed units / replication | running / 0 / streaming-async-0 |
 | No retention policy on `findings_log` (T-LOG.3) | 0 |
 
-_(The 23:45 UTC real timer fire is being watched to confirm the live timer path —
-result to be appended.)_
+**23:45 UTC real timer fire (post-deploy): emitted 0 rows to `findings_log`** — the
+running systemd timer executes the S18 code and the gate holds on the real path, not
+just in `deploy_guardrail.sh`'s double-start.
+
+**Cadence anomaly from S17 — investigated, benign, closed.** The escalation service
+ran 22:17:29 then 22:22:36 on 2026-09-06 (~5 min, not 15). `journalctl _COMM=systemd`
+shows a `systemctl daemon-reload` at 22:22:33 (an S17 unit edit) that re-armed the
+timer and fired an immediate run. Cadence returned to 15–15.5 min immediately after.
+One-off, not recurring. Nothing to fix.
 
 ---
 
