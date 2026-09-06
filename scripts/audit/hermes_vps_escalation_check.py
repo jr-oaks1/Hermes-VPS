@@ -212,16 +212,20 @@ def run() -> int:
     if not rows:
         findings.append(Finding("finding", "info", "escalation: no unresolved CRITICAL findings"))
     else:
+        below = 0
         for row, cls in classify_escalations(rows, now):
+            if cls["band"] == "none":
+                below += 1
+                continue
+            # GM / CEO band: one finding per row (real, actionable, latched).
             findings.append(Finding(
-                "alert" if cls["band"] != "none" else "finding",
-                cls["level"], cls["message"],
+                "alert", cls["level"], cls["message"],
                 owner_project=row.get("owner_project"),
             ))
             if cls["band"] == "ceo":
                 ceo_band = True
             # Latch + mirror once per band crossing.
-            if cls["band"] in ("gm", "ceo") and row.get("escalated_gm_at") is None:
+            if row.get("escalated_gm_at") is None:
                 try:
                     mark_escalated(db_url, row["id"], "gm")
                 except Exception as e:  # noqa: BLE001
@@ -234,6 +238,11 @@ def run() -> int:
                     mark_escalated(db_url, row["id"], "ceo")
                 except Exception:  # noqa: BLE001
                     pass
+        # One summary line for the below-threshold criticals, never one each
+        # (S17 smoke test: per-row INFO every 15 min is a slow feedback loop).
+        if below:
+            findings.append(Finding("finding", "info",
+                                    f"escalation: {below} open critical(s) below the 2h GM threshold"))
 
     # --- T3.10 heartbeat staleness ---
     timer_enabled = _timer_enabled("hermes-vps-guardrail.timer")

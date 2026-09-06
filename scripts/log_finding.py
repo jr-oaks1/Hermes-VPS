@@ -275,19 +275,18 @@ def _self_report(db_url, bot_token, chat_id, session_ref, tg_ok, db_ok) -> None:
         f"log_finding: dual-write incomplete ({', '.join(which)} leg failed)",
         detail="A finding was emitted but did not reach both sinks — T-LOG.2 breach.",
     )
-    # try whichever leg still works
-    if db_ok and db_url:
+    # Route the marker through the normal legs so it stays consistent (an outbox
+    # line AND a DB row, or the reconciliation check flags the marker itself as an
+    # orphan every cycle — a feedback loop).
+    tg_status: dict[str, bool] = {}
+    if bot_token and chat_id:
         try:
-            insert_findings(db_url, session_ref, [marker], {})
+            tg_status = send_telegram(bot_token, chat_id, [marker], header="🔴 T-LOG.2 self-report")
         except Exception:  # noqa: BLE001
             pass
-    if tg_ok and bot_token and chat_id:
+    if db_url:
         try:
-            requests.post(
-                f"https://api.telegram.org/bot{bot_token}/sendMessage",
-                json={"chat_id": chat_id, "text": _format_message([marker], "🔴 T-LOG.2 self-report")},
-                timeout=10,
-            )
+            insert_findings(db_url, session_ref, [marker], tg_status)
         except Exception:  # noqa: BLE001
             pass
 

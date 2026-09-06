@@ -104,10 +104,14 @@ ALTER TABLE findings_log SET (
 
 SELECT add_compression_policy('findings_log', compress_after => interval '90 days', if_not_exists => true);
 
-\echo '== 8. Verify — no retention job may exist =='
-SELECT count(*) AS retention_jobs_MUST_BE_ZERO
+\echo '== 8. Verify — no retention policy on findings_log (T-LOG.3). MUST be zero. =='
+-- NB: TimescaleDB ships a built-in "Job History Log Retention Policy"
+-- (proc_name policy_job_stat_history_retention, hypertable_name NULL) that
+-- prunes its OWN job-run history — that is not our data. Scope the check to
+-- findings_log.
+SELECT count(*) AS findings_log_retention_jobs_MUST_BE_ZERO
   FROM timescaledb_information.jobs
- WHERE proc_name LIKE '%retention%';
+ WHERE proc_name LIKE '%retention%' AND hypertable_name = 'findings_log';
 
 \echo '== 9. Final shape =='
 \d findings_log

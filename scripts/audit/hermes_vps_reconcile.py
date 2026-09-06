@@ -81,53 +81,60 @@ def _read_db_rows(db_url: str, since: datetime) -> list[dict]:
             return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
+# The escalation check's and reconcile's own output — excluded from the orphan_db
+# scan. A meta-check finding that failed its Telegram leg is a delivery_failed
+# (warning), never an orphan_db (critical); flagging it as a fresh critical every
+# cycle is a feedback loop (S17 smoke test caught this).
+_META_SESSION_PREFIXES = ("vps-escalation-", "vps-reconcile-")
+_SELF_REPORT_MARKER = "log_finding: dual-write incomplete"
+
+
+def _is_meta(row: dict) -> bool:
+    sr = row.get("session_ref") or ""
+    if any(sr.startswith(p) for p in _META_SESSION_PREFIXES):
+        return True
+    return _SELF_REPORT_MARKER in (row.get("summary") or "")
+
+
 def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
+    """One summary finding per run. WARNING+ only when a *substantive* WARNING/
+    CRITICAL finding failed to dual-write; INFO on a clean window."""
     since = datetime.now(timezone.utc) - timedelta(hours=window_hours)
     outbox = [r for r in _read_outbox(since) if r.get("telegram_expected")]
     db_rows = _read_db_rows(db_url, since)
 
     db_by_uid = {r["event_uid"]: r for r in db_rows if r.get("event_uid")}
-    outbox_uids = {r["event_uid"] for r in outbox}
+    outbox_by_uid = {r["event_uid"]: r for r in outbox}
 
-    findings: list[Finding] = []
+    orphan_telegram = [rec for uid, rec in outbox_by_uid.items() if uid not in db_by_uid]
+    delivery_failed = [rec for uid, rec in outbox_by_uid.items()
+                       if uid in db_by_uid and rec.get("delivered") is False]
+    orphan_db = [
+        r for r in db_rows
+        if r.get("event_uid") is not None          # pre-cutover rows are exempt
+        and not _is_meta(r)                         # meta-check output is exempt (feedback loop)
+        and not r.get("telegram_sent")
+        and r["event_uid"] not in outbox_by_uid
+    ]
 
-    # orphan_telegram: outbox WARNING+ line, no DB row
-    for rec in outbox:
-        if rec["event_uid"] not in db_by_uid:
-            findings.append(Finding(
-                "alert", "critical",
-                f"reconcile.orphan_telegram: Telegram event with no findings_log row",
-                detail=f"uid={rec['event_uid']} sev={rec.get('severity')} \"{rec.get('summary')}\"",
-            ))
+    n_ot, n_od, n_df = len(orphan_telegram), len(orphan_db), len(delivery_failed)
+    if n_ot or n_od:
+        sev, cat = "critical", "alert"
+    elif n_df:
+        sev, cat = "warning", "finding"
+    else:
+        sev, cat = "info", "finding"
 
-    # orphan_db: DB WARNING+ row, post-cutover (has uid), telegram not sent, no outbox line
-    for r in db_rows:
-        uid = r.get("event_uid")
-        if uid is None:
-            continue  # pre-cutover, exempt
-        if not r.get("telegram_sent") and uid not in outbox_uids:
-            findings.append(Finding(
-                "alert", "critical",
-                f"reconcile.orphan_db: findings_log row never reached Telegram",
-                detail=f"id={r['id']} uid={uid} sev={r['severity']} \"{r['summary']}\"",
-            ))
-
-    # delivery_failed: matched pair, outbox says not delivered
-    for rec in outbox:
-        uid = rec["event_uid"]
-        if uid in db_by_uid and rec.get("delivered") is False:
-            findings.append(Finding(
-                "finding", "warning",
-                "reconcile.delivery_failed: Telegram send failed for a logged event",
-                detail=f"uid={uid} \"{rec.get('summary')}\" err={rec.get('error')}",
-            ))
-
-    if not findings:
-        findings.append(Finding(
-            "finding", "info",
-            f"reconcile: {len(outbox)} Telegram / {len(db_rows)} findings_log WARNING+ events in {window_hours}h, 0 unmatched",
-        ))
-    return findings
+    summary = (f"reconcile: {len(outbox)} tg / {len(db_rows)} db WARNING+ in {window_hours}h — "
+               f"orphan_telegram={n_ot} orphan_db={n_od} delivery_failed={n_df}")
+    bits = []
+    for label, rows, key in (("orphan_telegram", orphan_telegram, "summary"),
+                             ("delivery_failed", delivery_failed, "summary")):
+        for rec in rows[:5]:
+            bits.append(f"{label}: uid={rec['event_uid']} \"{rec.get(key)}\"")
+    for r in orphan_db[:5]:
+        bits.append(f"orphan_db: id={r['id']} \"{r['summary']}\"")
+    return [Finding(cat, sev, summary, detail="; ".join(bits))]
 
 
 def main() -> int:
