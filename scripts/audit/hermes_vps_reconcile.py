@@ -99,14 +99,27 @@ def _is_meta(row: dict) -> bool:
 def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
     """One summary finding per run. WARNING+ only when a *substantive* WARNING/
     CRITICAL finding failed to dual-write; INFO on a clean window."""
-    since = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+    now = datetime.now(timezone.utc)
+    since = now - timedelta(hours=window_hours)
+    # orphan_telegram is only "news" while fresh — an old unmatched outbox line has
+    # already been surfaced on prior runs. Narrow that class to 6h so a persistent
+    # mismatch is flagged loudly once, not 96 times over a day.
+    orphan_since = now - timedelta(hours=min(6, window_hours))
     outbox = [r for r in _read_outbox(since) if r.get("telegram_expected")]
     db_rows = _read_db_rows(db_url, since)
 
     db_by_uid = {r["event_uid"]: r for r in db_rows if r.get("event_uid")}
     outbox_by_uid = {r["event_uid"]: r for r in outbox}
 
-    orphan_telegram = [rec for uid, rec in outbox_by_uid.items() if uid not in db_by_uid]
+    def _recent(rec: dict) -> bool:
+        try:
+            t = datetime.fromisoformat(rec["ts"])
+            return (t if t.tzinfo else t.replace(tzinfo=timezone.utc)) >= orphan_since
+        except (KeyError, ValueError):
+            return False
+
+    orphan_telegram = [rec for uid, rec in outbox_by_uid.items()
+                       if uid not in db_by_uid and _recent(rec)]
     delivery_failed = [rec for uid, rec in outbox_by_uid.items()
                        if uid in db_by_uid and rec.get("delivered") is False]
     orphan_db = [

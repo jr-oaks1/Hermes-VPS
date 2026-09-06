@@ -44,11 +44,16 @@ def query_findings_past_24h(db_url: str) -> list[dict] | None:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         with psycopg.connect(db_url, connect_timeout=10) as conn:
             with conn.cursor(row_factory=dict_row) as cur:
+                # S17: exclude rows a human has already dispositioned — the digest
+                # is "what still needs attention in the last 24h", not a full dump.
                 cur.execute(
                     """
-                    SELECT ts, source_project, severity, category, summary
+                    SELECT ts, source_project, severity, category, summary,
+                           coalesce(action_status, 'open') AS action_status
                     FROM findings_log
                     WHERE ts >= %s
+                      AND coalesce(action_status, 'open')
+                          NOT IN ('resolved', 'closed', 'no_action_needed')
                     ORDER BY ts DESC
                     """,
                     (cutoff,),
@@ -92,19 +97,26 @@ def format_digest(findings: list[dict]) -> str:
 
     lines.append("")
 
-    # By project
+    if not counts["critical"] and not counts["warning"]:
+        lines.append("")
+        lines.append("✅ No open warnings or criticals in the last 24h.")
+        return "\n".join(lines)
+
+    lines.append("")
+
+    # By project — show CRITICAL/WARNING items in the body; INFO stays a count only.
     for source in sorted(by_source.keys()):
         items = by_source[source]
-        total = sum(len(v) for v in items.values())
-        lines.append(f"<b>{html.escape(source)}</b>: {total} findings")
-
-        for severity in ["critical", "warning", "info"]:
-            if items[severity]:
-                marker = {"critical": "🔴", "warning": "🟡", "info": "ℹ️ "}[severity]
-                for summary in items[severity][:3]:  # Show top 3 per severity
-                    lines.append(f"  {marker} {html.escape(summary)}")
-                if len(items[severity]) > 3:
-                    lines.append(f"  ... and {len(items[severity]) - 3} more {severity}")
+        if not items["critical"] and not items["warning"]:
+            continue
+        n_actionable = len(items["critical"]) + len(items["warning"])
+        lines.append(f"<b>{html.escape(source)}</b>: {n_actionable} open (+{len(items['info'])} info)")
+        for severity in ("critical", "warning"):
+            marker = {"critical": "🔴", "warning": "🟡"}[severity]
+            for summary in items[severity][:5]:
+                lines.append(f"  {marker} {html.escape(summary)}")
+            if len(items[severity]) > 5:
+                lines.append(f"  ... and {len(items[severity]) - 5} more {severity}")
 
     return "\n".join(lines)
 
