@@ -100,4 +100,7 @@ recent linked here once it exists.
 
 > ## 🟢 S09 — hermes_v2 → JR Hermes Ingestor split (redirected session, 2026-08-26)
 > Session opened here but redirected by the user to a larger cross-project task: split `hermes_v2` into a new standalone project, `JR Hermes Ingestor` (local repo + GitHub remote, no server deployment). `hermes_v2` archived in full to `_archive/hermes_v2-pre-ingestor-split/`. Nothing changed in JR Hermes VPS itself — this project's `/opt/hermes_v2` cross-read stays valid until Ingestor's own server deployment happens. Full split detail lives in JR Hermes Ingestor's own `docs/sessions/01-10/S1-HANDOFF.md`. See `docs/sessions/S09-HANDOFF.md`.
+
+> ## 🟢 S11 — DB crisis catch-up, cross-project notices closed, daily-digest fix deployed live (2026-09-05)
+> Confirmed S10's DB corruption crisis had already been resolved (undocumented) via Ingestor's own S27 audit; closed 3 pending cross-project notices; root-caused 3 failed systemd units (weekly/monthly health checks failing on a stale git-push step, daily-digest failing on unescaped Telegram HTML). Fixed, staged, smoke-tested, and — after explicit user go-ahead — **deployed and live-verified** the daily-digest fix (`status=0/SUCCESS`, real digest sent). Weekly/monthly git-push bug and stale `hermes_v2` references in `hermes_vps_health_check.py` remain open for S12. See `docs/sessions/S11-HANDOFF.md` and `docs/sessions/S12-HANDOFF.md` (continuation pickup).
 ---
