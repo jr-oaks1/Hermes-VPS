@@ -26,13 +26,12 @@ Usage:
     python scripts/audit/hermes_vps_health_check.py --mode quick
     python scripts/audit/hermes_vps_health_check.py --mode deep
 
-Requires (from environment — EnvironmentFile= in the systemd unit; the unit reads
-TWO env files, /root/.hermes_vps/.env (primary) then /opt/hermes_v2/.env
-(secondary, for HERMES_LOG_DB_URL only) so this project doesn't duplicate a
-credential it doesn't otherwise need):
-    DATABASE_URL            (hermes_v2 — replication + ingestion freshness reads)
+Requires (from environment — a single EnvironmentFile=/root/.hermes_vps/.env in
+the systemd unit; the old secondary EnvironmentFile=/opt/hermes_v2/.env was
+dropped S13 (2026-09-05) — hermes_v2 is decommissioned and every var below is
+already in this project's own env file):
+    DATABASE_URL            (hermes_v2 DB — replication + ingestion freshness reads)
     HERMES_VPS_LOG_DB_URL   (hermes_vps_log — findings_log writes)
-    HERMES_LOG_DB_URL       (hermes_v2_log — cross-project findings export only)
     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID   (Hermes VPS's own bot)
 
 Exit codes: 0 = no critical finding, 1 = at least one critical finding, 2 = error.
@@ -58,7 +57,9 @@ INGESTION_STALE_WARN_MIN = 15
 TLS_EXPIRY_WARN_DAYS = 21
 TLS_CERT_PATH = "/etc/letsencrypt/live/artek-studio.com/fullchain.pem"
 PG_BACKUP_CONF = "/etc/pg_backup.conf"
-SYSTEMD_SERVICES = ("hermes_v2", "nginx", "postgresql")
+# hermes-ingestor is the live app on this host (hermes_v2.service decommissioned
+# 2026-08-26; listing it here produced a false CRITICAL every run until S13).
+SYSTEMD_SERVICES = ("hermes-ingestor", "nginx", "postgresql")
 
 
 @dataclass
@@ -93,8 +94,11 @@ def check_api_health() -> list[Finding]:
         body = resp.json()
         status = body.get("status", "unknown")
         agents = body.get("agents", {})
+        # "disabled" is an operator choice (e.g. fred_data), not a fault — treat it
+        # like the other benign states so it doesn't force a false CRITICAL (S13).
         bad_agents = {
-            aid: s for aid, s in agents.items() if s not in ("healthy", "idle", "role_excluded")
+            aid: s for aid, s in agents.items()
+            if s not in ("healthy", "idle", "role_excluded", "disabled")
         }
         if status == "ok" and not bad_agents:
             findings.append(Finding("finding", "info", f"api.health: ok ({len(agents)} agents)"))
@@ -243,9 +247,9 @@ def check_tls_expiry() -> list[Finding]:
 
 
 def check_git_sync(repo_dir: str) -> list[Finding]:
-    """Checks one repo's local-vs-origin sync. Called once per tracked repo (S1,
-    JR Hermes VPS split) -- hermes_v2/Ingestor's own deploy dir, plus this
-    project's own /opt/hermes-vps -- so a stale deploy on either side surfaces."""
+    """Checks one repo's local-vs-origin sync. S13: now only this project's own
+    /opt/hermes-vps deploy clone -- the /opt/hermes_v2 check was dropped with the
+    hermes_v2 decommission."""
     findings = []
     label = os.path.basename(repo_dir.rstrip("/"))
     try:
@@ -309,6 +313,39 @@ def _fetch_findings_window(db_url: str, window_days: int) -> list | dict:
         return {"error": str(e)}
 
 
+_EXPORT_COMMIT_PREFIX = "chore: findings export"
+
+
+def _sync_repo_to_origin(repo_dir: str) -> bool:
+    """Bring a deploy clone back in line with origin/main BEFORE we write the
+    export into it. The clone is a deploy target, not a source of truth — a
+    prior run's unpushable commit (transient network failure, or the pre-S13
+    divergence) must not accumulate into a forked history. Guard: only hard-reset
+    when every local-only commit is one of ours (the export chore); if a real
+    hand-made commit is sitting on the clone, leave it alone and skip the export
+    so a human notices."""
+    label = os.path.basename(repo_dir.rstrip("/"))
+    try:
+        subprocess.run(["git", "-C", repo_dir, "fetch", "origin", "main", "--quiet"],
+                       timeout=30, check=True)
+        local_only = subprocess.run(
+            ["git", "-C", repo_dir, "log", "--format=%s", "origin/main..HEAD"],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip().splitlines()
+        foreign = [s for s in local_only if not s.startswith(_EXPORT_COMMIT_PREFIX)]
+        if foreign:
+            print(f"repo sync ({label}): {len(foreign)} non-export local commit(s) "
+                  f"present ({foreign[0]!r}...) — skipping export, needs manual review",
+                  file=sys.stderr)
+            return False
+        subprocess.run(["git", "-C", repo_dir, "reset", "--hard", "origin/main"],
+                       timeout=30, check=True, capture_output=True)
+        return True
+    except Exception as e:
+        print(f"repo sync ({label}): failed: {e}", file=sys.stderr)
+        return False
+
+
 def _commit_and_push_export(repo_dir: str, export_path: str, mode: str, label: str) -> None:
     try:
         rel_path = os.path.relpath(export_path, repo_dir)
@@ -319,45 +356,33 @@ def _commit_and_push_export(repo_dir: str, export_path: str, mode: str, label: s
             return
         subprocess.run(
             ["git", "-C", repo_dir, "commit", "-m",
-             f"chore: findings export ({mode}, {datetime.now(timezone.utc):%Y-%m-%d})"],
+             f"{_EXPORT_COMMIT_PREFIX} ({mode}, {datetime.now(timezone.utc):%Y-%m-%d})"],
             check=True,
         )
-        subprocess.run(["git", "-C", repo_dir, "push", "origin", "main"], check=True)
-        print(f"findings export ({label}): committed and pushed")
+        try:
+            subprocess.run(["git", "-C", repo_dir, "push", "origin", "main"],
+                           check=True, capture_output=True, text=True, timeout=30)
+            print(f"findings export ({label}): committed and pushed")
+        except Exception as e:
+            # Roll the commit back so the clone stays exactly at origin/main —
+            # _sync_repo_to_origin would clean it next run anyway, but not leaving
+            # a dangling commit keeps `git status` honest in the meantime.
+            subprocess.run(["git", "-C", repo_dir, "reset", "--hard", "origin/main"],
+                           check=False, capture_output=True)
+            print(f"findings export ({label}): push failed, commit rolled back: {e}",
+                  file=sys.stderr)
     except Exception as e:
-        print(f"findings export ({label}): git commit/push failed: {e}", file=sys.stderr)
-
-
-def export_hermes_v2_findings(mode: str, hermes_log_db_url: str, repo_dir: str = "/opt/hermes_v2") -> None:
-    """Dump hermes_v2_log findings_log rows to the hermes_v2/Ingestor repo (S179;
-    split S1 -- this export stayed pointed at hermes_v2 unchanged so the existing
-    weekly/monthly RemoteTrigger cloud-review routines there keep working as-is).
-
-    Cloud-scheduled review agents can't reach this host directly (Tailscale-only,
-    no SSH from Anthropic's cloud sandbox) -- this is the bridge: export what the
-    agent needs into the repo it already has read/write access to, then commit
-    and push from here, where the credentials and DB access actually exist."""
-    window_days = 8 if mode == "quick" else 35
-    export = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "mode": mode,
-        "window_days": window_days,
-        "hermes_v2_log": _fetch_findings_window(hermes_log_db_url, window_days),
-    }
-    export_dir = os.path.join(repo_dir, "docs", "findings_export")
-    os.makedirs(export_dir, exist_ok=True)
-    export_path = os.path.join(export_dir, "latest.json")
-    with open(export_path, "w") as f:
-        json.dump(export, f, indent=2, default=str)
-    _commit_and_push_export(repo_dir, export_path, mode, "hermes_v2_log")
+        print(f"findings export ({label}): git commit failed: {e}", file=sys.stderr)
 
 
 def export_hermes_vps_findings(mode: str, vps_log_db_url: str, repo_dir: str = "/opt/hermes-vps") -> None:
-    """Dump hermes_vps_log findings_log rows to this project's own repo (S1, JR
-    Hermes VPS split) -- mirrors export_hermes_v2_findings but targets this
-    project's own repo/cloud-review routine instead of hermes_v2's, so host-level
-    findings get reviewed by a VPS-scoped agent rather than piggybacking on
-    hermes_v2's git history."""
+    """Dump hermes_vps_log findings_log rows into this project's own repo so the
+    VPS-scoped RemoteTrigger cloud-review routine can read them (cloud agents
+    can't reach this Tailscale-only host directly). S13: the parallel
+    export_hermes_v2_findings() was removed — it pushed to the decommissioned
+    hermes_v2 repo and had been failing every run since ~2026-08-26."""
+    if not _sync_repo_to_origin(repo_dir):
+        return
     window_days = 8 if mode == "quick" else 35
     export = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -424,7 +449,6 @@ def main() -> int:
     if args.mode == "deep":
         findings += check_backup_currency()
         findings += check_tls_expiry()
-        findings += check_git_sync("/opt/hermes_v2")
         findings += check_git_sync("/opt/hermes-vps")
 
     session_ref = args.session_ref or f"vps-healthcheck-{args.mode}-{datetime.now(timezone.utc):%Y%m%d}"
@@ -471,8 +495,6 @@ def main() -> int:
     else:
         print("telegram skipped: TELEGRAM_BOT_TOKEN/CHAT_ID not set", file=sys.stderr)
 
-    hermes_log_db_url = os.environ.get("HERMES_LOG_DB_URL", "")
-    export_hermes_v2_findings(args.mode, hermes_log_db_url)
     export_hermes_vps_findings(args.mode, vps_log_db_url)
 
     return 1 if any(f.severity == "critical" for f in findings) else 0

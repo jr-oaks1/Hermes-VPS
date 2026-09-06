@@ -1,7 +1,7 @@
 [Unit]
 Description=Hermes VPS Weekly Health Check (quick)
 Documentation=https://github.com/jr-oaks1/Hermes-VPS
-After=network-online.target postgresql.service hermes_v2.service
+After=network-online.target postgresql.service hermes-ingestor.service
 Wants=network-online.target
 PartOf=hermes-vps-healthcheck-weekly.timer
 
@@ -9,7 +9,10 @@ PartOf=hermes-vps-healthcheck-weekly.timer
 Type=oneshot
 User=root
 WorkingDirectory=/opt/hermes-vps
-EnvironmentFile=/opt/hermes_v2/.env
+# Single env file: /root/.hermes_vps/.env carries DATABASE_URL, HERMES_LOG_DB_URL,
+# HERMES_VPS_LOG_DB_URL, FINDINGS_DB_URL and the bot creds — all the script needs.
+# The old secondary EnvironmentFile=/opt/hermes_v2/.env was dropped S13 (2026-09-05):
+# hermes_v2 is decommissioned and that path is a single point of failure.
 EnvironmentFile=/root/.hermes_vps/.env
 ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_health_check.py --mode quick
 StandardOutput=append:/opt/hermes-vps/logs/hermes_vps_healthcheck.log
