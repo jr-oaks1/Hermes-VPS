@@ -101,6 +101,23 @@ owned tables `hermes_v2` can no longer read should be re-granted or left
 
 ---
 
+## 2b. Docs / memory / repo sync done this session
+
+- `CLAUDE.md` — S15 blockquote added; the stale `/opt/hermes_v2/.env` flag
+  rewritten to "verified clean S15".
+- Memory — `memory/s15_sentiment_grant_fixed_host_running.md` created,
+  `MEMORY.md` index pointer added.
+- Obsidian — S15 summary appended to
+  `C:\Users\jr250\ObsidianVault\Projects\JR Hermes VPS.md`.
+- `INTERACTION_NUMBERING_STANDARD.md` (workspace root) — 6th re-affirmation
+  line added (CEO asked again that interaction numbering + hallucination-zone
+  flagging be a ground rule for all projects; already binding + hook-enforced,
+  no mechanism change). Local memory `ground_rule_interaction_numbering.md`
+  updated to match.
+- Commits: JR Hermes VPS `81a480f` + this handoff (local `main`);
+  JR Hermes Ingestor `c8fcb94` (branch `s27-s28-audit-fixes`). Both pushed
+  during wrap-up.
+
 ## 3. Session side effects (disclosure)
 
 - One manual `systemctl start walk_forward_monitor.service` run — produced its
