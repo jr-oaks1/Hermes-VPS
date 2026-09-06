@@ -150,6 +150,16 @@ compression, never delete).
 (0750 root:root) on guardrail + escalation. `ExecStartPre=install -d …/logs` on
 the audit units.
 
+> **Post-enable regression, found + fixed same session (commit `895a822`):** the
+> guardrail runs every 5 min = 12 starts/h, but `StartLimitBurst=8` — every
+> *successful* oneshot run counts toward the limit, so after ~1 h of normal runs
+> systemd refused with `start-limit-hit` and the host went `degraded`. Fixed:
+> guardrail `Burst 8→20`, escalation `Burst 5→10` (sized to timer cadence +
+> headroom), `reset-failed`, redeployed, host back to `running`.
+> `deploy_guardrail.sh` gained **assertion 3b** — Burst must exceed starts/hour
+> derived from the timer interval. **Lesson: `StartLimitBurst` on a
+> timer-driven oneshot must clear the cadence, not a flat number.**
+
 Monthly deep audit gained `check_findings_hypertable_integrity` (T3.12): asserts
 the parent unique index valid, compression on, **no retention policy** →
 `findings_log: hypertable healthy (unique idx valid, compression on, no retention)`
@@ -244,7 +254,7 @@ or the GM-ladder mirror pushes your synthetic rows into `vps_orchestrator_findin
 | psycopg3 digest | `Result=success`, digest delivered |
 | health check `--mode deep` | `Result=success`, **13 findings all INFO**, hypertable-integrity INFO, export pushed |
 | reconcile invariant | `orphan_telegram=0 orphan_db=0 delivery_failed=0` |
-| Tier 0 | `StartLimitIntervalUSec=1h` on all 5; `/var/lib/hermes-vps` 0750 root:root |
+| Tier 0 | `StartLimitIntervalUSec=1h` on all 5; guardrail Burst=20 / escalation Burst=10 (sized to cadence after the `895a822` fix); `/var/lib/hermes-vps` 0750 root:root |
 | R4 boundary | `/opt/jrvps-orchestrator` + host `prometheus.service` untouched |
 | whole host | `is-system-running`=running; 0 failed; **0 open actionable findings** |
 | no retention policy | `timescaledb_information.jobs` where `hypertable_name='findings_log'` and retention → 0 |
