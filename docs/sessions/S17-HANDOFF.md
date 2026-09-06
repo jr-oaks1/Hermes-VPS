@@ -10,10 +10,19 @@
 ## Quick resume for S18
 
 **Nothing is open that blocks anything.** The host is `running`, 0 failed units,
-0 open CRITICAL findings, replication `streaming/async/0`, disk 56%. All 5 timers
-scheduled. Watch the first few hours of the 5-min guardrail + 15-min escalation
-for any debounce/emission surprise (none seen in the ~40 min of live runs this
-session).
+**0 open actionable findings** (0 critical + 0 warning; 125 historical false rows
+retro-closed to `no_action_needed`, 86 info rows left open), replication
+`streaming/async/0`, disk 56%, TLS 43 d. All 5 timers scheduled and firing on
+cadence (verified over multiple live cycles). Watch the first day of the 5-min
+guardrail + 15-min escalation for any debounce/emission surprise (none seen in
+the ~1 h of live runs this session).
+
+**First thing to check in S18:** `journalctl -u hermes-vps-escalation.service
+--since -3h` and `psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT date_trunc('hour',ts),
+count(*) FROM findings_log WHERE session_ref LIKE 'vps-escalation%' GROUP BY 1
+ORDER BY 1 DESC LIMIT 6"` — confirm ~3 info rows/run, no growth, no unexpected
+Telegram. If a real GM/CEO escalation fired overnight it's a genuine finding —
+read it, don't assume it's a test artifact.
 
 Open threads (all external / awaiting others):
 - **GM (JR_VPS_Orchestrators)** — cross-project notice sent: (a) S17 smoke-test
@@ -85,8 +94,10 @@ one-time, reversible, rollback noted in the file):
 - **Backfill (user-approved):** 110 rows older than 7 days → `no_action_needed`.
   Then the 10 recent `service.hermes_v2: inactive` / `api.health` false-CRITICALs
   (S13 bug, root-caused + fixed S13, GM already closed the unified-DB copies per
-  the S71 notice) → also `no_action_needed` with a documented reason. **Result: 0
-  open criticals at cutover.**
+  the S71 notice) → also `no_action_needed` with a documented reason. Later in the
+  session the 4 remaining `open` warnings (`git.hermes_v2` / `git.hermes-vps`
+  drift rows from Sept 1–2, all pre-cutover `event_uid IS NULL`, S13-era) → also
+  `no_action_needed`. **Result: 125 rows retro-closed, 0 open actionable findings.**
 - **`findings_log` is now a TimescaleDB hypertable** — `ts` partition, 1-month
   `chunk_time_interval`, `compress_after => 90 days`, segmentby `severity,source`.
   **NO `add_retention_policy` — ever (Rule T-LOG.3).** PK widened to `(id, ts)`;
@@ -235,11 +246,23 @@ or the GM-ladder mirror pushes your synthetic rows into `vps_orchestrator_findin
 | reconcile invariant | `orphan_telegram=0 orphan_db=0 delivery_failed=0` |
 | Tier 0 | `StartLimitIntervalUSec=1h` on all 5; `/var/lib/hermes-vps` 0750 root:root |
 | R4 boundary | `/opt/jrvps-orchestrator` + host `prometheus.service` untouched |
-| whole host | `is-system-running`=running; 0 failed; 0 open criticals |
+| whole host | `is-system-running`=running; 0 failed; **0 open actionable findings** |
 | no retention policy | `timescaledb_information.jobs` where `hypertable_name='findings_log'` and retention → 0 |
 
 ## 10. Briefing
 
-Published as an artifact this session ("Hermes VPS Health Briefing"). Raw data in
-`C:\Users\jr250\AppData\Local\Temp\...\scratchpad\phase0_baseline.md` (before) and
-the §BRIEFING block of the S17 transcript (after).
+Published as an artifact this session: **Hermes VPS Health Briefing** —
+https://claude.ai/code/artifact/6237427d-7fd9-4a77-875b-179c2439f992
+(live capacity/replication/backup/security snapshot + the Tier 0–4 scorecard +
+before→after). Raw capture is in the §"BRIEFING DATA COLLECTION" block of the S17
+transcript.
+
+## 11. Interaction / session-numbering ground rule — re-affirmed (S17)
+
+Per user directive this session: the `#Interaction NN` opener + "flag before the
+hallucination zone" behaviour is a **binding ground rule for every project**, not
+just this one. It was already codified (`INTERACTION_NUMBERING_STANDARD.md`,
+effective S66 2026-08-29, global `UserPromptSubmit` hook at
+`C:\Users\jr250\.claude\hooks\interaction-reminder.js`) — S17 adds the **8th**
+cross-project re-affirmation to that doc's log. No mechanism change; the hook
+already enforces it platform-wide.
