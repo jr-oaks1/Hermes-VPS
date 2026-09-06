@@ -8,9 +8,10 @@ Type=oneshot
 User=root
 WorkingDirectory=/opt/hermes-vps
 
-# Load environment from .env files (primary: vps, secondary: hermes_v2 for any cross-reads)
+# The digest script needs only FINDINGS_DB_URL + TELEGRAM_BOT_TOKEN/CHAT_ID, all
+# in this file. The old optional EnvironmentFile=-/opt/hermes_v2/.env was dropped
+# S13 (2026-09-05) with the hermes_v2 decommission — it supplied nothing used here.
 EnvironmentFile=/root/.hermes_vps/.env
-EnvironmentFile=-/opt/hermes_v2/.env
 
 ExecStart=/opt/hermes-vps/.venv/bin/python3 /opt/hermes-vps/scripts/audit/hermes_vps_daily_digest.py
 

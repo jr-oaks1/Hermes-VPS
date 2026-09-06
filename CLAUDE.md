@@ -17,8 +17,13 @@ this project didn't exist yet.
 - nginx (`deploy/nginx.conf` — the single host-wide config; still contains
   `hermes_v2`'s app-specific `location`/`root` blocks inline, since nginx only
   runs once per host and someone has to own the whole file)
-- Prometheus + Grafana (`deploy/prometheus.*`, `deploy/grafana/`,
-  `deploy/setup_monitoring.sh`)
+- Host metrics monitoring. **Current reality (verified S13, 2026-09-05): the
+  live stack is `netdata`** (systemd `netdata`, active, local API on
+  `127.0.0.1:19999`). **Prometheus is installed-but-disabled+inactive and
+  Grafana is not installed at all** — the in-repo `deploy/prometheus.*`,
+  `deploy/grafana/` and `deploy/setup_monitoring.sh` are retained as
+  infra-as-code for a possible future re-deploy but do NOT reflect what's
+  running. Don't treat them as live config.
 - UFW firewall snapshots (`deploy/firewall/`)
 - The Hermes VPS Telegram bot (`@JRHermesVPSBot` / `Clevious_Hermes_Bot`,
   credentials in `/root/.hermes_vps/.env`) and its infra-level alert routing

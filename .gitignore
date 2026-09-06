@@ -14,6 +14,10 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Runtime logs written by the systemd units on the deploy host
+logs/
+*.bak-s*
+
 # Credentials — NEVER commit to git
 /root/.hermes_vps_credentials/
 .env
