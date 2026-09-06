@@ -8,6 +8,31 @@ verified healthy end-to-end.
 
 ---
 
+## Quick Resume for whoever opens S15
+
+Everything in this project's own control from S13 is closed. What's left is
+**cross-project only**:
+
+1. **`walk_forward_monitor.service` DB grant** (§1, §4) — `hermes_v2` role
+   lost SELECT on `sentiment` table (now owned by `hermes_ingestor`). This is
+   why the host still shows `degraded`. Notice already sent to JR Hermes
+   Ingestor (`docs/CROSS-PROJECT-NOTICE-2026-09-06-...` in that repo, on its
+   `s27-s28-audit-fixes` branch) — check there for a reply before re-raising.
+2. **`/opt/hermes_v2` teardown** — unchanged blocker list from S13 (§4c).
+3. **Disk items owned elsewhere** — Ingestor's `backup-pre-s*` dirs (~1.76 GB),
+   Basic Crypto Signals' orphaned offsite copy (1.1 GB) — notices sent, no
+   action expected from this project.
+4. **`/root/pre-drop-safety/temp_recovery_s23-pre-drop-s14.dump`** (1.2 GB on
+   the Hetzner host) — safety copy of the dropped DB, fine to delete after a
+   grace period (a few weeks from 2026-09-06) once confident it's not needed.
+
+Nothing is on fire. Live state as of session close (verified 2026-09-06
+04:25 UTC, ~14 min post-reboot): `is-system-running` = `degraded` (the one
+`walk_forward_monitor.service` failure only), disk 58% (31 GB free), uptime
+14 min post-reboot, kernel `6.8.0-139-generic`.
+
+---
+
 ## 1. What was done and verified live this session
 
 ### 4b · Dropped `temp_recovery_s23` — 2.6 GB reclaimed
