@@ -132,6 +132,29 @@ standards docs + repo inspection + S13–S15 handoffs.
 | §3 row's S71 "severity-labelling + decommissioned-service defects" note | likely **stale** | S13-HANDOFF.md says fixed (hermes_v2 out of `SYSTEMD_SERVICES`, `disabled`-state handled, all-INFO exit 0). Update the standard's §3 row to match — needs a live health-check re-run to confirm before editing. |
 | `/opt/CONTINUOUS_IMPROVEMENT_STANDARD.md` sync | recurring | Keep in step with root copy. |
 
+### 6a-bis. Mandatory dual-write for EVERY warning/alert (user directive, S16)
+**Requirement (user, S16):** every `WARNING`- or `ALERT`/`CRITICAL`-level event produced
+anywhere in JR Hermes VPS's tooling MUST be written **twice** — once to the queryable
+findings DB (`hermes_vps_log.findings_log`) **and** once to the infra Telegram alerting
+channel (`@JRHermesVPSBot`). No warning-or-higher event may be Telegram-only or DB-only.
+"Every warning received must be logged."
+
+Current state (**flag:** from repo inspection this session, not a live audit):
+`scripts/audit/hermes_vps_health_check.py:~464` sends "only CRITICAL/WARNING to Telegram"
+and writes all findings to the DB via GM's `log_operational_finding.py` — so the health
+check *may* already satisfy this, but it is **not enforced or verified** across the other
+surfaces (`hermes_vps_daily_digest.py`, the infra alert routing for CPU/mem/disk/SSL/
+replication, and any future Tier 3 guardrail / Tier 4 escalation code).
+
+**S17 actions:**
+- Audit every code path in this project that emits a WARNING/ALERT and confirm each one
+  dual-writes (DB + Telegram). List the gaps.
+- Add a single shared helper (the `log_finding.py`-equivalent from 6a) that does both in
+  one call, and route all warning/alert emission through it.
+- Make it a checked invariant — e.g. a test, or a periodic reconciliation that flags any
+  Telegram alert with no matching `findings_log` row (and vice-versa) in the same window.
+- Fold the rule into this project's CLAUDE.md and memory as a binding local standard.
+
 ### 6b. Hetzner Branch Manager self-report endpoint — doesn't exist
 `ORGANIZATIONAL_STRUCTURE.md` §"Two-Channel Alert Escalation" line ~194: Contabo projects
 POST alerts to `http://100.121.245.4:8002/self-report`; **"Hetzner projects: equivalent
