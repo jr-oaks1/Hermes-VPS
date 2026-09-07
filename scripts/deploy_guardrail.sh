@@ -10,8 +10,10 @@
 # S17 commit and deploy/sql/S17_findings_log_tier4.sql has been applied.
 set -euo pipefail
 
-REPO=/opt/hermes-vps
-PY="$REPO/.venv/bin/python3"
+# REPO/PY overridable so a staged git-worktree can be smoke-tested before the
+# live `git pull` (SMOKE-TEST BINDING RULE). Defaults are the live deploy paths.
+REPO="${REPO:-/opt/hermes-vps}"
+PY="${PY:-/opt/hermes-vps/.venv/bin/python3}"
 cd "$REPO"
 
 echo "== 1. committed executable bit + syntax =="
