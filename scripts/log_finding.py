@@ -361,6 +361,41 @@ def open_critical(db_url: str, since: datetime) -> list[dict]:
             return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
+_TRIAGE_MARKER = "triage:"  # case-insensitive substring in detail
+
+
+def settled_without_triage(db_url: str) -> list[dict]:
+    """WARNING/CRITICAL rows sitting in 'no_action_needed' with no explicit human
+    triage stamp in `detail`.
+
+    A warning/critical finding enters 'open' (initial_action_status) and a human
+    dispositions it: 'resolved'/'closed' if it was real and dealt with, or
+    'no_action_needed' + a `[... triage: <reason>]` note in `detail` if it was a
+    false positive / not worth acting on. A row that is 'no_action_needed' with
+    NO triage marker was almost certainly swept there by a bulk UPDATE — which is
+    exactly what deploy/sql/S17_findings_log_tier4.sql did (age-based, not
+    severity-filtered) and what silently emptied the Tier 4 ladder. This is the
+    invariant that guards against a repeat: enforced at deploy time
+    (scripts/deploy_guardrail.sh step 7b) and every 15 min at runtime
+    (hermes_vps_escalation_check).
+    """
+    with psycopg.connect(db_url, connect_timeout=10) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, ts, severity, summary, action_status
+                  FROM findings_log
+                 WHERE severity IN ('warning', 'critical')
+                   AND action_status = 'no_action_needed'
+                   AND (detail IS NULL OR position(%s in lower(detail)) = 0)
+                 ORDER BY ts DESC
+                """,
+                (_TRIAGE_MARKER,),
+            )
+            cols = [d.name for d in cur.description]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
 def mark_escalated(db_url: str, finding_id: int, level: str) -> None:
     """Latch a notification so a 15-min timer doesn't re-page the same row.
     Records notification, not state — the band is still re-derived every cycle."""

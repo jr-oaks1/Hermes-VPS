@@ -14,14 +14,25 @@ REPO=/opt/hermes-vps
 PY="$REPO/.venv/bin/python3"
 cd "$REPO"
 
-echo "== 1. executable bit + syntax =="
+echo "== 1. committed executable bit + syntax =="
+# S51: the old form did `chmod +x` and THEN `test -x` — self-fulfilling, could
+# never catch a repo committed 0644. A fresh clone of a 0644 guardrail is exactly
+# the S67 203/EXEC silent-failure. Assert the COMMITTED mode is 100755 first, then
+# chmod only as belt-and-braces repair of the working tree.
 for f in scripts/log_finding.py \
          scripts/emission_state.py \
          scripts/audit/hermes_vps_guardrail.py \
          scripts/audit/hermes_vps_escalation_check.py \
-         scripts/audit/hermes_vps_reconcile.py; do
+         scripts/audit/hermes_vps_reconcile.py \
+         scripts/audit/hermes_vps_health_check.py \
+         scripts/audit/hermes_vps_daily_digest.py; do
+  mode=$(git ls-files -s -- "$f" | awk '{print $1}')
+  if [ "$mode" != "100755" ]; then
+    echo "   FAIL: $f is committed as ${mode:-MISSING}, not 100755 — a fresh clone would not be executable"
+    echo "         fix: git update-index --chmod=+x $f && git commit"
+    exit 1
+  fi
   chmod +x "$f"
-  test -x "$f"
   "$PY" -m py_compile "$f"
 done
 echo "   ok"
@@ -104,6 +115,25 @@ if [ "${OPEN_INFO:-99}" -ne 0 ]; then
   exit 1
 fi
 echo "   ok: 0 INFO rows are 'open'"
+
+echo "== 7b. Tier 4 queue integrity (S51) — no WARNING/CRITICAL row settled without triage =="
+# deploy/sql/S17_findings_log_tier4.sql retro-closed every open row older than
+# 7 days regardless of severity, silently emptying the escalation ladder. Any
+# warning/critical row in 'no_action_needed' must carry an explicit human
+# 'triage:' note in detail (deploy/sql/S51_findings_log_severity_triage.sql),
+# never be swept there by a bulk UPDATE.
+UNTRIAGED=$(psql_scalar "SELECT count(*) FROM findings_log
+                          WHERE severity IN ('warning','critical')
+                            AND action_status='no_action_needed'
+                            AND (detail IS NULL OR position('triage:' in lower(detail)) = 0)")
+if [ "${UNTRIAGED:-99}" -ne 0 ]; then
+  echo "   FAIL: $UNTRIAGED WARNING/CRITICAL row(s) settled with no triage stamp — run deploy/sql/S51_findings_log_severity_triage.sql (review each first)"
+  psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT id,ts::date,severity,left(summary,60) FROM findings_log
+       WHERE severity IN ('warning','critical') AND action_status='no_action_needed'
+         AND (detail IS NULL OR position('triage:' in lower(detail)) = 0) ORDER BY id"
+  exit 1
+fi
+echo "   ok: every settled WARNING/CRITICAL row carries a triage stamp"
 
 echo "== 8. T-LOG.3 guard — no retention policy on findings_log =="
 RET=$(psql_scalar "SELECT count(*) FROM timescaledb_information.jobs

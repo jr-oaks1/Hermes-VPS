@@ -85,37 +85,47 @@ def check_systemd_services() -> list[Finding]:
     return findings
 
 
+# Agent states that are not a fault: healthy/idle are fine, role_excluded means
+# this node doesn't run it, "disabled" is an operator choice (e.g. fred_data) — S13.
+_BENIGN_AGENT_STATES = ("healthy", "idle", "role_excluded", "disabled")
+
+
+def classify_api_health(status: str, agents: dict) -> Finding:
+    """Pure: turn a /health body into one Finding. Kept separate from the HTTP
+    call so it is unit-testable and so the summary/severity logic lives in one
+    place.
+
+    S51: the summary names the actual fault. The API reports a top-level
+    `status` that can read "ok" even while an agent is unhealthy; the old code
+    interpolated that field straight into the summary, producing the nonsense
+    row summary="api.health: ok" at severity=critical with the real reason only
+    in detail. Severity: "starting" is an expected multi-minute post-restart
+    transient (warning); any other non-benign agent state is critical; a
+    non-"ok" top-level status with all agents fine is a warning.
+    """
+    bad_agents = {aid: s for aid, s in agents.items() if s not in _BENIGN_AGENT_STATES}
+    if status == "ok" and not bad_agents:
+        return Finding("finding", "info", f"api.health: ok ({len(agents)} agents)")
+    only_starting = bool(bad_agents) and all(s == "starting" for s in bad_agents.values())
+    severity = "warning" if (not bad_agents or only_starting) else "critical"
+    if bad_agents:
+        names = ", ".join(f"{a}={s}" for a, s in sorted(bad_agents.items()))
+        kind = "starting" if only_starting else "unhealthy"
+        summary = f"api.health: {len(bad_agents)} agent(s) {kind} ({names})"
+        detail = f"top-level status={status}; unhealthy agents: {bad_agents}"
+    else:
+        summary = f"api.health: status={status}, agents ok"
+        detail = f"top-level status={status}"
+    return Finding("finding", severity, summary, detail=detail)
+
+
 def check_api_health() -> list[Finding]:
-    findings = []
     try:
         resp = requests.get("https://localhost/health", verify=False, timeout=15)
         body = resp.json()
-        status = body.get("status", "unknown")
-        agents = body.get("agents", {})
-        # "disabled" is an operator choice (e.g. fred_data), not a fault — treat it
-        # like the other benign states so it doesn't force a false CRITICAL (S13).
-        bad_agents = {
-            aid: s for aid, s in agents.items()
-            if s not in ("healthy", "idle", "role_excluded", "disabled")
-        }
-        if status == "ok" and not bad_agents:
-            findings.append(Finding("finding", "info", f"api.health: ok ({len(agents)} agents)"))
-        else:
-            # "starting" is normal for the first few minutes after any restart
-            # (several agents run a multi-minute backfill on every restart, per
-            # hermes_v2.service's own ExecStartPost comment) -- only escalate to
-            # critical when an agent reports something other than that expected
-            # transient, so a health check landing shortly after a restart
-            # doesn't false-alarm.
-            only_starting = bad_agents and all(s == "starting" for s in bad_agents.values())
-            severity = "warning" if (not bad_agents or only_starting) else "critical"
-            findings.append(Finding(
-                "finding", severity, f"api.health: {status}",
-                detail=f"unhealthy agents: {bad_agents}" if bad_agents else "",
-            ))
+        return [classify_api_health(body.get("status", "unknown"), body.get("agents", {}))]
     except Exception as e:
-        findings.append(Finding("error", "critical", "api.health: unreachable", str(e)))
-    return findings
+        return [Finding("error", "critical", "api.health: unreachable", str(e))]
 
 
 def check_replication(database_url: str) -> list[Finding]:

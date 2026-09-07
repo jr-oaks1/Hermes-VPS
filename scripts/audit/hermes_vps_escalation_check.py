@@ -50,6 +50,7 @@ sys.path.insert(0, _SCRIPT_DIR)                            # repo/scripts/audit
 
 from log_finding import (  # noqa: E402
     Finding, log_findings, open_critical, mark_escalated, state_dir,
+    settled_without_triage,
 )
 from emission_state import load_state, save_state, throttle  # noqa: E402
 
@@ -123,6 +124,30 @@ def classify_row(row: dict, now: datetime) -> dict:
         "band": "gm",
         "message": f"escalation: GM escalation — finding #{fid} unresolved for {_fmt_age(age)} — \"{summary}\"",
     }
+
+
+def queue_integrity_finding(untriaged: list[dict]) -> Finding:
+    """Pure: turn the settled_without_triage() result into one Finding.
+
+    deploy/sql/S17_findings_log_tier4.sql retro-closed every open row older than
+    7 days regardless of severity, silently emptying this ladder. A WARNING/
+    CRITICAL row in 'no_action_needed' must carry an explicit human 'triage:'
+    note (deploy/sql/S51_findings_log_severity_triage.sql), never be swept there
+    by a bulk UPDATE. key prefix 'queue-integrity' so the emission gate reads
+    its recovery independently of the 'escalation:' alerts.
+    """
+    if not untriaged:
+        return Finding("finding", "info",
+                       "queue-integrity: all settled WARNING/CRITICAL rows carry a triage stamp")
+    ids = ", ".join(f"#{r['id']}" for r in untriaged[:10])
+    more = f" (+{len(untriaged) - 10} more)" if len(untriaged) > 10 else ""
+    return Finding(
+        "finding", "warning",
+        f"queue-integrity: {len(untriaged)} WARNING/CRITICAL row(s) settled without a triage stamp",
+        detail=(f"ids {ids}{more} are action_status='no_action_needed' with no 'triage:' note in "
+                f"detail — likely swept by a bulk UPDATE. Review and stamp each, or re-open. "
+                f"See deploy/sql/S51_findings_log_severity_triage.sql for the pattern."),
+    )
 
 
 def _fmt_age(age: timedelta) -> str:
@@ -273,6 +298,17 @@ def run(dry_run: bool = False) -> int:
         findings.extend(reconcile(db_url, window_hours=24))
     except Exception as e:  # noqa: BLE001
         findings.append(Finding("error", "warning", "reconcile: check raised", detail=str(e)))
+
+    # --- Tier 4 queue integrity: no WARNING/CRITICAL row may sit settled
+    # without an explicit human triage stamp (S51). A bulk age-based UPDATE
+    # -- deploy/sql/S17_findings_log_tier4.sql did exactly this -- silently
+    # emptied this very ladder; catch a repeat between deploys, not only at
+    # deploy time (deploy_guardrail.sh step 7b). key prefix 'queue-integrity'
+    # so the emission gate reads its recovery independently.
+    try:
+        findings.append(queue_integrity_finding(settled_without_triage(db_url)))
+    except Exception as e:  # noqa: BLE001
+        findings.append(Finding("error", "warning", "queue-integrity: check raised", detail=str(e)))
 
     # --- S18 emission gate: state-change INFO + one hourly all-clear only ---
     # WARNING/CRITICAL still emit on the first failing cycle (debounce_default=1);

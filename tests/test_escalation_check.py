@@ -21,7 +21,31 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts", "aud
 
 from hermes_vps_escalation_check import (  # noqa: E402
     classify_row, classify_escalations, check_guardrail_heartbeat,
+    queue_integrity_finding,
 )
+
+
+class TestQueueIntegrity:
+    """S51: a bulk age-based settle silently emptied the Tier 4 ladder once
+    (deploy/sql/S17_findings_log_tier4.sql). queue_integrity_finding is the
+    runtime half of the guard (deploy_guardrail.sh step 7b is the deploy half)."""
+
+    def test_clean_is_info(self):
+        f = queue_integrity_finding([])
+        assert f.severity == "info"
+        assert f.summary.startswith("queue-integrity:")
+
+    def test_untriaged_rows_are_warning_and_listed(self):
+        rows = [{"id": 105}, {"id": 152}, {"id": 239}]
+        f = queue_integrity_finding(rows)
+        assert f.severity == "warning"
+        assert "3 WARNING/CRITICAL" in f.summary
+        assert "#105" in f.detail and "#239" in f.detail
+
+    def test_key_prefix_isolates_it_from_escalation_alerts(self):
+        # emission_state derives the state-machine key from the text before ':'
+        assert queue_integrity_finding([]).summary.split(":")[0] == "queue-integrity"
+        assert queue_integrity_finding([{"id": 1}]).summary.split(":")[0] == "queue-integrity"
 
 
 def _row(fid, ts, action_status="open", owner_project=None,
