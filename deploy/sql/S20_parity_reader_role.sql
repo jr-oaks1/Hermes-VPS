@@ -72,15 +72,21 @@ ALTER ROLE parity_reader
       PASSWORD :'pw';
 
 \echo '== 3. Database CONNECT privileges: parity only, PUBLIC revoked there =='
-REVOKE CONNECT ON DATABASE parity   FROM PUBLIC;
-GRANT  CONNECT ON DATABASE parity   TO   parity_reader;
+REVOKE CONNECT ON DATABASE parity FROM PUBLIC;
+GRANT  CONNECT ON DATABASE parity TO   parity_reader;
 
--- Defense in depth: make sure the role can never reach the app databases on
--- this cluster even if PUBLIC connect is ever re-granted on one of them.
-REVOKE CONNECT ON DATABASE hermes_v2 FROM parity_reader;
-SELECT format('REVOKE CONNECT ON DATABASE %I FROM parity_reader', datname)
-  FROM pg_database
- WHERE datname IN ('crypto_db', 'crypto_signals')\gexec
+-- NOTE on isolation from the app databases (hermes_v2 etc.): those DBs grant
+-- CONNECT to PUBLIC (the Postgres default), and every role is a member of
+-- PUBLIC, so a per-role `REVOKE CONNECT ... FROM parity_reader` would be
+-- cosmetic -- it cannot override the PUBLIC grant. Revoking CONNECT from
+-- PUBLIC on hermes_v2 would hit cyclestation and others and is another
+-- project's DB -- out of scope. The real, sufficient boundary is
+-- pg_hba.conf: parity_reader is admitted ONLY by
+--   host  parity  parity_reader  100.121.245.4/32  scram-sha-256
+-- There is no `host all ...` / Tailscale-wide line and no
+-- `host hermes_v2 parity_reader ...` line, so a connection attempt to any
+-- other database, or from any other host, is rejected at pg_hba before
+-- authentication. Verified live in S20 (see handoff).
 
 \echo '== 4. Lock down the public schema inside "parity" =='
 \connect parity
@@ -98,11 +104,9 @@ SELECT pg_has_role('parity_reader', 'pg_read_all_settings', 'MEMBER')
        pg_has_role('parity_reader', 'pg_monitor', 'MEMBER')
          AS has_pg_monitor_MUST_BE_F;
 
-\echo '== 7. VERIFY -- database reachability =='
-SELECT has_database_privilege('parity_reader', 'parity',    'CONNECT')
-         AS can_connect_parity_MUST_BE_T,
-       has_database_privilege('parity_reader', 'hermes_v2',  'CONNECT')
-         AS can_connect_hermes_v2_MUST_BE_F;
+\echo '== 7. VERIFY -- can reach the holding DB (network boundary is pg_hba, see step 3) =='
+SELECT has_database_privilege('parity_reader', 'parity', 'CONNECT')
+         AS can_connect_parity_MUST_BE_T;
 
 \echo '== 8. VERIFY -- the 5 GUCs are readable in this session (proof of concept) =='
 SELECT name, setting, unit
