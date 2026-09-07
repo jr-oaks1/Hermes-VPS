@@ -13,7 +13,7 @@
 -- reversible):
 --
 --     SECRET=$(openssl rand -base64 24)
---     sudo -u postgres psql -v ON_ERROR_STOP=1 -v pw="'$SECRET'" \
+--     sudo -u postgres psql -v ON_ERROR_STOP=1 -v pw="$SECRET" \
 --          -d postgres -f deploy/sql/S20_parity_reader_role.sql
 --
 -- Take a roles/globals backup first (R5 "back up before you edit"):
@@ -62,7 +62,10 @@ SELECT 'CREATE DATABASE parity OWNER postgres'
  WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'parity')\gexec
 
 \echo '== 2. Create / refresh the parity_reader login role (idempotent) =='
-SELECT format('CREATE ROLE parity_reader LOGIN CONNECTION LIMIT 3 PASSWORD %L', :'pw')
+-- Create without a password (idempotent), then ALTER sets every attribute +
+-- the password. psql expands :'pw' to a single properly-quoted literal
+-- (invoke with  -v pw="$SECRET"  -- no extra surrounding quotes).
+SELECT 'CREATE ROLE parity_reader LOGIN'
  WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'parity_reader')\gexec
 
 ALTER ROLE parity_reader
