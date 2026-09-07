@@ -259,6 +259,12 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | `cs_admin` | `crypto_signals` | owner (no superuser) | crypto-signals admin tasks |
 | `cs_writer` | `crypto_signals` | INSERT/UPDATE/SELECT | crypto-signals Docker containers |
 | `cs_reader` | `crypto_signals` | SELECT | crypto-signals read-only consumers |
+| `parity_reader` | `parity` (empty holding DB) | LOGIN + CONNECT only, **no role memberships** | Clevious VPS `contabo_tier1_watch.py` — reads the 5 replication-critical GUCs from the primary for the standby-parity check (JR Hermes VPS S20 / Clevious S51 C1-A). `pg_hba`-scoped to `100.121.245.4/32`. Deliberately **not** `pg_monitor` (S19.4 `primary_conninfo` cleartext lesson). |
+
+> **Table is stale** beyond the rows above — the Hetzner `:5432` cluster also carries
+> `audit_reader` (S19.4, GM-owned) and the standby has its own readers; `hermes_vps` /
+> `hermes_ingestor` live on other DBs/clusters. A full roles-table reconciliation is pending
+> (noted JR Hermes VPS S20 handoff).
 
 ---
 
@@ -271,6 +277,15 @@ listen_addresses = 'localhost,172.17.0.1,172.18.0.1,100.97.62.7'
 ```
 
 Serves `hermes_v2` and `crypto_db`. Physical streaming replica runs on Contabo:5432.
+
+**pg_hba.conf — cross-host read (added JR Hermes VPS S20):**
+```
+# Clevious VPS standby-parity check → 5 replication-critical GUCs, read-only
+host  parity  parity_reader  100.121.245.4/32  scram-sha-256
+```
+Placed above the `replication` block. Reload-only (`SELECT pg_reload_conf()`), no restart —
+the cluster already binds `100.97.62.7:5432` for streaming replication. Backup of the prior
+file: `/etc/postgresql/16/main/pg_hba.conf.bak-s20`.
 
 ### Contabo — crypto_signals PRIMARY (port 5434, new in S43)
 
