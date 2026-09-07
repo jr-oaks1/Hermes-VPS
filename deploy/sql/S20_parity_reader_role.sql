@@ -118,7 +118,5 @@ SELECT name, setting, unit
                 'max_prepared_transactions', 'max_locks_per_transaction')
  ORDER BY name;
 
-\echo '== DONE. Now apply the pg_hba.conf line (see header) and reload. =='
-\echo '== Then verify AS THE ROLE from the primary:'
-\echo '==   psql "host=100.97.62.7 dbname=parity user=parity_reader" \'
-\echo '==        -c "SELECT name,setting FROM pg_settings WHERE name IN (...)"'
+\echo '== DONE. Next: add the pg_hba.conf line (see header), reload, then'
+\echo '== verify as the role from the primary with the probe query in the header. =='
