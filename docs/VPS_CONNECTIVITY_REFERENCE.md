@@ -801,29 +801,42 @@ closed.** Restarting both Contabo clusters logged every gate firing
 tailscale0`); Hetzner's logged its Tailscale gate. All expected addresses bound, the
 standby caught up to 0.06s, replication returned to `streaming`.
 
-### 14.5 Both nodes fully upgraded — TimescaleDB is 2.29.0 everywhere
+### 14.5 Both nodes fully upgraded — TimescaleDB is 2.29.2 as of S76 (2026-09-07)
 
-| Node | DB | Was | Now |
-|---|---|---|---|
-| Hetzner | `postgres` | 2.26.4 | **2.29.0** |
-| Hetzner | `hermes_v2` | 2.28.3 | **2.29.0** |
-| Contabo | `crypto_signals` | 2.28.3 | **2.29.0** |
-| Contabo | `vps_orchestrator` | 2.28.2 | **2.29.0** |
+| Node | DB | Was | Now | Status (S76) |
+|---|---|---|---|---|
+| Hetzner | `postgres` | 2.26.4 | **2.29.0** | — |
+| Hetzner | `hermes_v2` | 2.28.3 | **2.29.2** | ⚠️ Loaded/catalog skew (see note) |
+| Hetzner | `hermes_vps_log` | — | **2.29.2** | ✅ Fixed S76 |
+| Contabo | `crypto_signals` | 2.28.3 | **2.29.2** | ✅ |
+| Contabo | `vps_orchestrator` | 2.28.2 | **2.29.2** | ✅ |
 
 Also `tailscale` 1.98.10 and `timescaledb-toolkit` 1.24.0 on both. 0 packages upgradable,
 no reboot required, 0 failed units on either node.
 
-2.29.0 **drops PostgreSQL 15** (both nodes are on 16 — unaffected) and replaces
+2.29.x **drops PostgreSQL 15** (both nodes are on 16 — unaffected) and replaces
 `_timescaledb_catalog.chunk_constraint` with a compatibility view that will be removed in
 a future release. **If your project queries that catalog table directly, fix it now.**
 
 > 🔑 **Upgrade order in a replication pair is not symmetric — learned the hard way.**
-> The primary's extension was updated to 2.29.0 before Contabo had the matching library,
-> and **every query on the standby then failed** with
+> S73 saw the primary's extension bump to 2.29.0 before the standby's package matched,
+> causing **every query on the standby to fail** with
 > `could not access file "$libdir/timescaledb-2.29.0"`. WAL replay was unaffected
 > (storage-level) but reads were down until the standby was upgraded and restarted.
 > **Upgrade the STANDBY's binaries FIRST, then the primary's extension.** The primary
 > reports `streaming` throughout — the breakage is invisible from that side.
+> 
+> **S76 discovery (2026-09-07):** Clevious VPS S51's claim "both hosts load TimescaleDB 2.29.0, matching"
+> was **wrong** — it queried the default `postgres` database (wrong target). Real live state: `hermes_v2`
+> already matched at 2.29.1 both sides; `hermes_vps_log` was **already broken on the Contabo standby**
+> — catalog bumped to 2.29.2 on Hetzner primary, but Contabo's installed package was still 2.29.1,
+> so `$libdir/timescaledb-2.29.2` missing. **Fixed same session:** package-only install on Contabo
+> (2.29.1→2.29.2), no `ALTER EXTENSION`, no restart. Verified: standby reads now succeed, replication
+> still streaming/async/zero-lag.
+> 
+> ⚠️ **hermes_v2 extension-skew alert (S76):** `hermes_v2` on Hetzner primary shows loaded-vs-installed
+> skew (package 2.29.2, catalog still 2.29.1). This is JR Hermes Ingestor's database, not this project's
+> — flagged to them in S76 for their timing. No action needed from this project.
 
 ### 14.6 `crypto_signals_compute` — correction to §12.5
 
