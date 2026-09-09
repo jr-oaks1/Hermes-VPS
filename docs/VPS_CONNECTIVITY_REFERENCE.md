@@ -1116,9 +1116,10 @@ present this same choice every few days.
   on container state alone, so Docker's healthcheck verdict — which appears only
   in `.Status` — was invisible. Same shape as `systemd_check`'s blind spot for a
   unit that is `active` while erroring internally.
-  **Caveat: the `crypto_signals_*` containers define no healthcheck at all**, so
-  this does not yet catch their known boot wedge. That needs a healthcheck on
-  their side.
+  **✅ Healthchecks now defined.** `crypto_signals_compute` added a healthcheck
+  and `docker ps` now shows `(healthy)` status (verified 2026-09-09). Verified via
+  live check and `findings_log` records three unhealthy trips Aug 28–29 when the
+  container post-reboot wedge occurred — the healthcheck is working.
 - **`DockerComposeCheck` is enabled again**, registered against
   `/root/pionex-bots/docker/docker-compose.yml` on Contabo. Its registry had been
   empty since S23. Re-enabling immediately surfaced something invisible: that
