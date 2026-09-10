@@ -33,7 +33,18 @@ Also folded in (reusing the 15-min cadence rather than adding units):
 Env: HERMES_VPS_LOG_DB_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID,
      FINDINGS_DB_URL (optional — unified-DB mirror; if unset, GM ladder is fed
      only by the health check and that gap is itself reported).
-Exit codes: 0 = no CEO-band escalation, 1 = at least one CEO-band escalation, 2 = error.
+
+Exit codes (S19b): 0 = the check ran to completion (escalations found or not),
+2 = the check could not run (findings_log unreachable / env missing). A CEO-band
+escalation is NOT a non-zero exit — a oneshot that exits 1 becomes a `failed`
+unit, the Tier 3 guardrail then alarms on that failed unit, this check then
+escalates the guardrail's CRITICAL, and both units are wedged `failed` forever
+(the 2026-09-08 → 2026-09-10 deadlock, ~39k rows). Escalation state is durable
+in the findings_log row itself (T4.3); the exit code carries none of it.
+
+S19b also makes each escalating row emit ONCE per band crossing (gated on the
+row's escalated_gm_at / escalated_ceo_at latch), not once every 15-min cycle —
+the per-cycle re-emission was the bulk of the storm volume.
 """
 
 from __future__ import annotations
@@ -162,6 +173,20 @@ def classify_escalations(rows: list[dict], now: datetime) -> list[tuple[dict, di
     return [(row, classify_row(row, now)) for row in rows]
 
 
+def is_first_band_crossing(row: dict, band: str) -> bool:
+    """S19b: True the first time a row reaches `band` ('gm'|'ceo'), i.e. its
+    escalated_<band>_at latch is still NULL. A row already latched at its current
+    band is silent — the latch column IS the durable notification record (T4.3),
+    and re-emitting a Finding every 15-min cycle is what turned 2 stuck rows into
+    ~37k findings_log rows over 2026-09-08 → 2026-09-10.
+    """
+    if band == "gm":
+        return row.get("escalated_gm_at") is None
+    if band == "ceo":
+        return row.get("escalated_ceo_at") is None
+    return False
+
+
 # --------------------------------------------------------------------------- #
 # Heartbeat staleness (T3.10)
 # --------------------------------------------------------------------------- #
@@ -234,7 +259,6 @@ def run(dry_run: bool = False) -> int:
 
     now = datetime.now(timezone.utc)
     findings: list[Finding] = []
-    ceo_band = False
 
     # --- Tier 4 escalation ladder ---
     try:
@@ -252,41 +276,58 @@ def run(dry_run: bool = False) -> int:
     if not rows:
         findings.append(Finding("finding", "info", "escalation: no unresolved CRITICAL findings"))
     else:
-        below = 0
+        below = already_gm = already_ceo = 0
         for row, cls in classify_escalations(rows, now):
-            if cls["band"] == "none":
+            band = cls["band"]
+            if band == "none":
                 below += 1
                 continue
-            # GM / CEO band: one finding per row (real, actionable, latched).
+            # S19b: emit ONLY on the first crossing into a band (see
+            # is_first_band_crossing). A row already notified at its current band
+            # is counted into an INFO roll-up, never re-paged.
+            if not is_first_band_crossing(row, band):
+                if band == "ceo":
+                    already_ceo += 1
+                else:
+                    already_gm += 1
+                continue
+            # First crossing → one derived notification row. NOT a work item:
+            # the underlying finding #row['id'] carries the real action_status,
+            # so this enters already-settled and tagged, and open_critical()
+            # excludes this check's own session_ref — double protection against
+            # the check re-escalating its own output (the nested
+            # "CEO ESCALATION ... 'CEO ESCALATION ...'" rows in the storm).
             findings.append(Finding(
                 "alert", cls["level"], cls["message"],
+                detail=f"[meta: derived Tier 4 {band.upper()}-band notification for finding #{row['id']}]",
                 owner_project=row.get("owner_project"),
+                action_status="no_action_needed",
             ))
-            if cls["band"] == "ceo":
-                ceo_band = True
             # Latch + mirror once per band crossing. Skipped in --dry-run
             # (mark_escalated writes the DB; _mirror_to_gm_ladder shells out to
             # the GM's script and writes vps_orchestrator_findings).
-            if row.get("escalated_gm_at") is None and not dry_run:
+            if not dry_run:
                 try:
                     mark_escalated(db_url, row["id"], "gm")
+                    if band == "ceo":
+                        mark_escalated(db_url, row["id"], "ceo")
                 except Exception as e:  # noqa: BLE001
                     findings.append(Finding("error", "warning",
-                                            f"escalation: could not latch escalated_gm_at for #{row['id']}",
+                                            f"escalation: could not latch escalation for #{row['id']}",
                                             detail=str(e)))
                 findings.extend(_mirror_to_gm_ladder(row, cls["message"]))
-            if cls["band"] == "ceo" and row.get("escalated_ceo_at") is None and not dry_run:
-                try:
-                    mark_escalated(db_url, row["id"], "ceo")
-                except Exception:  # noqa: BLE001
-                    pass
-        # One summary line for the below-threshold criticals, never one each
-        # (S17 smoke test: per-row INFO every 15 min is a slow feedback loop).
-        # Distinct key prefix ('escalation.subthreshold') so the emission gate
-        # never reads this INFO line as a recovery of an active 'escalation:' alert.
+        # One INFO summary line each for the below-threshold and the
+        # already-notified criticals, never one per row (S17 smoke test: per-row
+        # INFO every 15 min is a slow feedback loop). Distinct key prefixes so the
+        # emission gate never reads them as a recovery of an active 'escalation:'
+        # alert.
         if below:
             findings.append(Finding("finding", "info",
                                     f"escalation.subthreshold: {below} open critical(s) below the 2h GM threshold"))
+        if already_gm or already_ceo:
+            findings.append(Finding("finding", "info",
+                                    f"escalation.notified: {already_gm} GM-band + {already_ceo} CEO-band "
+                                    f"row(s) already latched — no re-page"))
 
     # --- T3.10 heartbeat staleness ---
     timer_enabled = _timer_enabled("hermes-vps-guardrail.timer")
@@ -324,7 +365,7 @@ def run(dry_run: bool = False) -> int:
                               allclear_summary=lambda n: f"escalation: all {n} checks nominal",
                               recovered_summary=lambda k: f"{k}: cleared")
         print(f"\nwould emit {len(emitted)} of {len(findings)} finding(s) after the gate")
-        return 1 if ceo_band else 0
+        return 0
 
     state = load_state(_STATE_FILE)
     emitted, new_state = throttle(
@@ -342,7 +383,10 @@ def run(dry_run: bool = False) -> int:
     for f in emitted:
         print(f"[{f.severity.upper()}] {f.summary}" + (f" — {f.detail}" if f.detail else ""))
 
-    return 1 if ceo_band else 0
+    # S19b: exit 0 whenever the check completed. CEO-band state is durable in the
+    # findings_log row (escalated_ceo_at); the exit code must not turn this
+    # oneshot into a `failed` unit that the Tier 3 guardrail then alarms on.
+    return 0
 
 
 def _timer_enabled(unit: str) -> bool | None:

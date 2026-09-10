@@ -21,8 +21,28 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts", "aud
 
 from hermes_vps_escalation_check import (  # noqa: E402
     classify_row, classify_escalations, check_guardrail_heartbeat,
-    queue_integrity_finding,
+    queue_integrity_finding, is_first_band_crossing,
 )
+
+
+class TestFirstBandCrossing:
+    """S19b: the deadlock storm was ~37k rows because every 15-min cycle
+    re-emitted a Finding for every still-open critical. Emission is now gated on
+    the row's own escalated_<band>_at latch."""
+
+    def test_unlatched_gm_row_is_first_crossing(self):
+        assert is_first_band_crossing({"escalated_gm_at": None}, "gm") is True
+
+    def test_latched_gm_row_is_not(self):
+        assert is_first_band_crossing({"escalated_gm_at": "2026-09-08T00:00:00Z"}, "gm") is False
+
+    def test_ceo_uses_its_own_latch_independent_of_gm(self):
+        row = {"escalated_gm_at": "2026-09-08T00:00:00Z", "escalated_ceo_at": None}
+        assert is_first_band_crossing(row, "ceo") is True
+        assert is_first_band_crossing(row, "gm") is False
+
+    def test_none_band_never_crosses(self):
+        assert is_first_band_crossing({}, "none") is False
 
 
 class TestQueueIntegrity:

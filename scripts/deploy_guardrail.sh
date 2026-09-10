@@ -127,7 +127,9 @@ echo "== 7b. Tier 4 queue integrity (S51) — no WARNING/CRITICAL row settled wi
 UNTRIAGED=$(psql_scalar "SELECT count(*) FROM findings_log
                           WHERE severity IN ('warning','critical')
                             AND action_status='no_action_needed'
-                            AND (detail IS NULL OR position('triage:' in lower(detail)) = 0)")
+                            AND (detail IS NULL OR
+                                 (position('triage:' in lower(detail)) = 0
+                                  AND position('[meta:' in lower(detail)) = 0))")
 if [ "${UNTRIAGED:-99}" -ne 0 ]; then
   echo "   FAIL: $UNTRIAGED WARNING/CRITICAL row(s) settled with no triage stamp — run deploy/sql/S51_findings_log_severity_triage.sql (review each first)"
   psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT id,ts::date,severity,left(summary,60) FROM findings_log
@@ -145,6 +147,41 @@ if [ "${RET:-99}" -ne 0 ]; then
   exit 1
 fi
 echo "   ok: 0 retention jobs"
+
+echo "== 9. S19b anti-deadlock guards =="
+# 9a — the units themselves must not be `failed` right now (steps 4/5/6 ran them).
+#      Before S19b a CRITICAL finding exited 1 -> the oneshot went `failed` ->
+#      the guardrail alarmed on it -> the escalation check escalated that ->
+#      neither unit could ever return to green.
+for u in hermes-vps-guardrail hermes-vps-escalation; do
+  st=$(systemctl is-failed "$u.service" || true)
+  if [ "$st" = "failed" ]; then
+    echo "   FAIL: $u.service is 'failed' after a normal run — exit-code contract regressed (must be 0 = 'audit ran')"
+    journalctl -u "$u.service" -n 20 --no-pager
+    exit 1
+  fi
+done
+echo "   ok: both units clean after their deploy-check runs"
+# 9b — check_failed_units() must exclude the two own units from CRITICAL.
+"$PY" - <<'PYEOF'
+import sys
+sys.path.insert(0, "scripts"); sys.path.insert(0, "scripts/audit")
+from unittest import mock
+import hermes_vps_guardrail as g
+fake = "UNIT LOAD ACTIVE SUB\nhermes-vps-guardrail.service loaded failed failed x\nhermes-vps-escalation.service loaded failed failed x\n"
+with mock.patch.object(g.subprocess, "run",
+                       return_value=mock.Mock(stdout=fake, returncode=0)):
+    out = g.check_failed_units()
+assert len(out) == 1 and out[0].severity == "info", out
+assert "own units excluded" in (out[0].detail or ""), out
+fake2 = fake + "some-other.service loaded failed failed x\n"
+with mock.patch.object(g.subprocess, "run",
+                       return_value=mock.Mock(stdout=fake2, returncode=0)):
+    out = g.check_failed_units()
+assert len(out) == 1 and out[0].severity == "critical", out
+assert "some-other.service" in out[0].detail and "1 failed unit(s)" in out[0].summary, out
+print("   ok: own units excluded from CRITICAL; real failed units still escalate")
+PYEOF
 
 echo
 echo "ALL T3.11 DEPLOYMENT ASSERTIONS PASSED — safe to: systemctl enable --now hermes-vps-{guardrail,escalation}.timer"

@@ -28,7 +28,14 @@ detect its own absence.
 
 Env: HERMES_VPS_LOG_DB_URL, DATABASE_URL, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID.
      HERMES_VPS_STATE_DIR (optional, staging override).
-Exit codes: 0 = no critical finding, 1 = at least one critical, 2 = error.
+
+Exit codes (S19b): 0 = the audit ran to completion (findings or not), 2 = the
+audit could not run (collect() raised). A CRITICAL finding is NOT a non-zero
+exit — a oneshot that exits 1 becomes a `failed` unit, which check_failed_units()
+then re-alarms on, which the Tier 4 escalation check then escalates: a
+self-sustaining loop that ran 2026-09-08 → 2026-09-10 and produced ~39k
+findings_log rows. "The audit found something" and "the audit could not run"
+are different states and only the second is a unit failure.
 """
 
 from __future__ import annotations
@@ -105,15 +112,31 @@ def _unit_exists(unit: str) -> bool:
     return unit in r.stdout
 
 
+# S19b: this guardrail's own two units MUST NOT be counted here. If a bug puts
+# hermes-vps-guardrail.service or hermes-vps-escalation.service into `failed`,
+# counting that as a CRITICAL makes the guardrail alarm on its own failure —
+# and the Tier 4 escalation check then escalates that CRITICAL, which keeps both
+# units `failed`, which is the exact condition each alarms on. Neither can ever
+# return to green. Their liveness is covered instead by the T3.10 guardrail
+# heartbeat-staleness check in hermes_vps_escalation_check.py, which is the
+# correct "a guardrail cannot detect its own absence" backstop.
+_OWN_UNITS = ("hermes-vps-guardrail.service", "hermes-vps-escalation.service")
+
+
 def check_failed_units() -> list[Finding]:
     try:
         r = subprocess.run(["systemctl", "list-units", "--state=failed", "--no-legend", "--plain"],
                            capture_output=True, text=True, timeout=10)
         failed = [ln.split()[0] for ln in r.stdout.splitlines() if ln.strip()]
-        if failed:
-            return [Finding("alert", "critical", f"systemd: {len(failed)} failed unit(s)",
-                            detail=", ".join(failed))]
-        return [Finding("finding", "info", "systemd: no failed units")]
+        own = [u for u in failed if u in _OWN_UNITS]
+        other = [u for u in failed if u not in _OWN_UNITS]
+        own_note = (f" | own units excluded: {', '.join(own)} — liveness covered by the T3.10 "
+                    f"guardrail-heartbeat staleness check" if own else "")
+        if other:
+            return [Finding("alert", "critical", f"systemd: {len(other)} failed unit(s)",
+                            detail=", ".join(other) + own_note)]
+        return [Finding("finding", "info", "systemd: no failed units",
+                        detail=own_note.lstrip(" |") if own_note else "")]
     except Exception as e:  # noqa: BLE001
         return [Finding("error", "warning", "systemd: --failed check failed", str(e))]
 
@@ -286,7 +309,7 @@ def run(dry_run: bool = False) -> int:
         for f in raw:
             print(f"  [{f.severity.upper():8}] {f.summary}" + (f" — {f.detail}" if f.detail else ""))
         print(f"\nworst severity: {worst}; would emit {len(emitted)} finding(s)")
-        return 1 if worst == "critical" else 0
+        return 0
 
     log_findings(emitted, session_ref=f"vps-guardrail-{datetime.now(timezone.utc):%Y%m%d}",
                  header="🛡️ Tier 3 guardrail")
@@ -295,7 +318,9 @@ def run(dry_run: bool = False) -> int:
 
     for f in emitted:
         print(f"[{f.severity.upper()}] {f.summary}" + (f" — {f.detail}" if f.detail else ""))
-    return 1 if worst == "critical" else 0
+    # S19b: exit 0 whenever the audit completed. A CRITICAL finding is dual-written
+    # + heartbeat-recorded above; it does not make this oneshot a `failed` unit.
+    return 0
 
 
 if __name__ == "__main__":

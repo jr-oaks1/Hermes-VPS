@@ -38,6 +38,7 @@ import argparse
 import json
 import os
 import sys
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -155,17 +156,31 @@ def send_telegram(
     error = None
     if to_send and bot_token and chat_id:
         text = _format_message(to_send, header)
-        try:
-            resp = requests.post(
-                f"https://api.telegram.org/bot{bot_token}/sendMessage",
-                json={"chat_id": chat_id, "text": text},
-                timeout=15,
-            )
-            delivered = resp.ok
-            if not resp.ok:
-                error = f"HTTP {resp.status_code}: {resp.text[:200]}"
-        except Exception as e:  # noqa: BLE001
-            error = str(e)
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {"chat_id": chat_id, "text": text}
+        # S19b: honour a 429 `retry_after` once. During the 2026-09-08→10 storm
+        # the bot hit Telegram's rate limit ~13.6k times; each failure then
+        # produced a `_self_report` CRITICAL, compounding the flood. One bounded
+        # retry lets a legitimate burst through without a busy-loop.
+        for attempt in (1, 2):
+            try:
+                resp = requests.post(url, json=payload, timeout=15)
+            except Exception as e:  # noqa: BLE001
+                error = str(e)
+                break
+            if resp.ok:
+                delivered = True
+                error = None
+                break
+            error = f"HTTP {resp.status_code}: {resp.text[:200]}"
+            if resp.status_code == 429 and attempt == 1:
+                try:
+                    wait = int(resp.json().get("parameters", {}).get("retry_after", 1))
+                except Exception:  # noqa: BLE001
+                    wait = 1
+                time.sleep(min(max(wait, 1), 30))
+                continue
+            break
     elif to_send and not (bot_token and chat_id):
         error = "TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID not set"
 
@@ -341,7 +356,16 @@ def log_finding(
 
 def open_critical(db_url: str, since: datetime) -> list[dict]:
     """Unresolved CRITICAL rows newer than `since`, newest first. Mirrors
-    JR_VPS_Orchestrators FindingsLogReader.open_critical (synchronous here)."""
+    JR_VPS_Orchestrators FindingsLogReader.open_critical (synchronous here).
+
+    S19b: the Tier 4 escalation check reads this to decide what to escalate, and
+    it also WRITES rows (its GM/CEO-band notifications). Excluding its own output
+    here — by session_ref and by the 'escalation:' summary prefix — is what stops
+    it escalating its own escalations into the nested
+    "CEO ESCALATION ... 'CEO ESCALATION ...'" rows that made up the 2026-09-08→10
+    storm. The notification rows are also written action_status='no_action_needed'
+    (so they never match here anyway); this filter is the belt to that braces.
+    """
     with psycopg.connect(db_url, connect_timeout=10) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -353,6 +377,8 @@ def open_critical(db_url: str, since: datetime) -> list[dict]:
                  WHERE severity = 'critical'
                    AND action_status IN ('open', 'in_progress')
                    AND ts > %s
+                   AND coalesce(session_ref, '') NOT LIKE 'vps-escalation-%%'
+                   AND summary NOT LIKE 'escalation:%%'
                  ORDER BY ts DESC
                 """,
                 (since,),
@@ -361,7 +387,11 @@ def open_critical(db_url: str, since: datetime) -> list[dict]:
             return [dict(zip(cols, row)) for row in cur.fetchall()]
 
 
-_TRIAGE_MARKER = "triage:"  # case-insensitive substring in detail
+# S19b: a WARNING/CRITICAL row may legitimately sit in 'no_action_needed' if it
+# carries a human 'triage:' stamp OR a machine '[meta: ...]' tag (a derived
+# notification row the Tier 4 check writes about another finding — never itself a
+# work item). Either marker satisfies the queue-integrity invariant.
+_TRIAGE_MARKERS = ("triage:", "[meta:")
 
 
 def settled_without_triage(db_url: str) -> list[dict]:
@@ -372,25 +402,30 @@ def settled_without_triage(db_url: str) -> list[dict]:
     dispositions it: 'resolved'/'closed' if it was real and dealt with, or
     'no_action_needed' + a `[... triage: <reason>]` note in `detail` if it was a
     false positive / not worth acting on. A row that is 'no_action_needed' with
-    NO triage marker was almost certainly swept there by a bulk UPDATE — which is
-    exactly what deploy/sql/S17_findings_log_tier4.sql did (age-based, not
-    severity-filtered) and what silently emptied the Tier 4 ladder. This is the
-    invariant that guards against a repeat: enforced at deploy time
+    NO triage/meta marker was almost certainly swept there by a bulk UPDATE —
+    which is exactly what deploy/sql/S17_findings_log_tier4.sql did (age-based,
+    not severity-filtered) and what silently emptied the Tier 4 ladder. This is
+    the invariant that guards against a repeat: enforced at deploy time
     (scripts/deploy_guardrail.sh step 7b) and every 15 min at runtime
     (hermes_vps_escalation_check).
     """
+    # a row is "untriaged" when detail is NULL, or detail contains NONE of the
+    # accepted markers. One `position(... ) = 0` clause per marker, all ANDed.
+    marker_clauses = " AND ".join(
+        f"position(%s in lower(detail)) = 0" for _ in _TRIAGE_MARKERS
+    )
     with psycopg.connect(db_url, connect_timeout=10) as conn:
         with conn.cursor() as cur:
             cur.execute(
-                """
+                f"""
                 SELECT id, ts, severity, summary, action_status
                   FROM findings_log
                  WHERE severity IN ('warning', 'critical')
                    AND action_status = 'no_action_needed'
-                   AND (detail IS NULL OR position(%s in lower(detail)) = 0)
+                   AND (detail IS NULL OR ({marker_clauses}))
                  ORDER BY ts DESC
                 """,
-                (_TRIAGE_MARKER,),
+                tuple(m.lower() for m in _TRIAGE_MARKERS),
             )
             cols = [d.name for d in cur.description]
             return [dict(zip(cols, row)) for row in cur.fetchall()]
