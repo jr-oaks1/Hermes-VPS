@@ -175,11 +175,10 @@ findings, replication `streaming/async`, `deploy_guardrail.sh` 9/9 after.
   clean at `f064750`). **`/opt/hermes-ingestor-staging` NOT touched** (active
   today). This closes the S16-escalated `/opt` clutter item.
   → notice: `docs/CROSS-PROJECT-NOTICE-2026-09-10-jr-hermes-vps-s21-ingestor-host-cleanup.md`
-- **`/opt/archives/crypto_db_v1_archive_20260518.dump` (578 MB) — LEFT IN PLACE.**
-  Verified S21: no `crypto*` DB exists on Hetzner `:5432`, no copy on Contabo —
-  this is the **sole surviving copy** of a decommissioned DB's data. Deleting it
-  needs an explicit informed decision, not general cleanup authorization. Open
-  question for the user.
+- **`/opt/archives/crypto_db_v1_archive_20260518.dump` (578 MB) — DELETED** on
+  explicit user authorization after being told it was the sole surviving copy
+  (no `crypto*` DB on Hetzner `:5432`, no copy on Contabo — both verified S21).
+  `/opt/archives/` now empty and removed.
 
 **Still not independently actionable:** B7 (Y3, GM). B8 (`DROP ROLE
 crypto_platform`) — needs consumer confirmation. B3 (sshd `ListenAddress`) — host
