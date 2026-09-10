@@ -143,10 +143,30 @@ Clevious S44 R5).
 | B7 | = **Y3** (GM, escalated S19): TimescaleDB runtime 2.29.0 vs installed pkg 2.29.2; 2 apt packages held back — latent divergence at next PG restart. |
 | B8 | `crypto_platform` login role — `CONNECT` + `public` `USAGE` on `hermes_v2`, **zero table grants**, no active connections. Candidate `DROP ROLE` after confirming no `crypto_data`-style consumer. |
 
-**Actioned this session:** `/opt/hermes-vps` deploy clone fast-forwarded to
-`b026634` (was 1 commit behind — S21 doc commits only, no service impact).
-Nothing else changed — all MEDIUM/LOW items are either cross-project or need the
-staged-smoke-test path.
+### Actioned this session (independent, no dependencies, no date gates)
+
+- **P2** — roles table reconciled (§1).
+- **B6** — `telegram_outbox.jsonl.1.pre-s19b` + `.storm-s19b-archive` gzipped on
+  the host (13 MB → 0.9 MB; active `.jsonl` untouched; verified no code
+  references those names; `deploy_guardrail.sh` still 9/9, heartbeat fresh).
+- **`/opt/hermes-vps`** deploy clone fast-forwarded to current (`b026634` →
+  `S21` HEAD) — was 1 commit behind, doc-only, no service impact.
+- **A1** cross-project notice written →
+  `docs/CROSS-PROJECT-NOTICE-2026-09-10-jr-hermes-vps-s21-ingestor-log-unbackuped.md`
+  (Ingestor + GM; JR Hermes VPS offered to apply the host steps once Ingestor
+  picks retention).
+- **A2** cross-project notice written →
+  `docs/CROSS-PROJECT-NOTICE-2026-09-10-jr-hermes-vps-s21-to-GM-orch-cluster-backup.md`
+  (GM — verify the `:5435` `vps_orchestrator` dump is full + off-sited).
+
+**Nothing else is independently actionable.** B1/B7 are cross-project (escalated
+S16/S19). B2 (delete stale 2.4 GB manual dumps + 578 MB `/opt/archives` legacy
+`crypto_db_v1` archive) and B8 (`DROP ROLE crypto_platform`) are destructive and
+need explicit user approval + consumer confirmation. B3 (sshd `ListenAddress`)
+and B4 (`apt autoremove` old kernel `-137`) are host changes with no urgency
+(disk 54%) — left for the user to green-light. B5 is on the user's own machine.
+Note surfaced: `pg_backup.sh` (`/opt/backups/scripts/`) is **GM-owned and not in
+any git repo** — GM's to vendor.
 
 ## 5. Interaction / numbering ground rule
 
