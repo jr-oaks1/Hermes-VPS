@@ -102,9 +102,12 @@ def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
     CRITICAL finding failed to dual-write; INFO on a clean window."""
     now = datetime.now(timezone.utc)
     since = now - timedelta(hours=window_hours)
-    # orphan_telegram is only "news" while fresh — an old unmatched outbox line has
-    # already been surfaced on prior runs. Narrow that class to 6h so a persistent
-    # mismatch is flagged loudly once, not 96 times over a day.
+    # A dual-write breach is only "news" while fresh — an old unmatched / failed
+    # outbox line has already been surfaced on prior runs. Narrow orphan_telegram
+    # AND delivery_failed to 6h so a resolved incident (S19b: ~16k storm delivery
+    # failures sitting in the journal) is not re-alarmed every cycle for a full
+    # day after it is over. The full `window_hours` still drives the headline
+    # counts for context.
     orphan_since = now - timedelta(hours=min(6, window_hours))
     outbox = [r for r in _read_outbox(since) if r.get("telegram_expected")]
     db_rows = _read_db_rows(db_url, since)
@@ -122,7 +125,8 @@ def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
     orphan_telegram = [rec for uid, rec in outbox_by_uid.items()
                        if uid not in db_by_uid and _recent(rec)]
     delivery_failed = [rec for uid, rec in outbox_by_uid.items()
-                       if uid in db_by_uid and rec.get("delivered") is False]
+                       if uid in db_by_uid and rec.get("delivered") is False
+                       and _recent(rec)]
     orphan_db = [
         r for r in db_rows
         if r.get("event_uid") is not None          # pre-cutover rows are exempt
@@ -144,8 +148,10 @@ def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
     else:
         sev, cat = "info", "finding"
 
+    recent_hours = min(6, window_hours)
     summary = (f"reconcile: {len(outbox)} tg / {len(db_rows)} db WARNING+ in {window_hours}h — "
-               f"orphan_telegram={n_ot} orphan_db={n_od} delivery_failed={n_df}")
+               f"orphan_telegram={n_ot} delivery_failed={n_df} (last {recent_hours}h), "
+               f"orphan_db={n_od} (open/in_progress)")
     bits = []
     for label, rows, key in (("orphan_telegram", orphan_telegram, "summary"),
                              ("delivery_failed", delivery_failed, "summary")):
