@@ -34,7 +34,7 @@
 | **SSH port** | 22 (Tailscale only) **+ 52222 public fallback, live since S28** — reachable on both IPv4 and IPv6, see §13.1 | 2222 — reachable via **both** Tailscale (`100.121.245.4`) **and the public IP** (`195.26.247.212`) since S27 |
 | **CPU** | Intel Xeon Skylake, 4 vCPU | AMD EPYC, ~4 vCPU |
 | **RAM** | 7.8 GB | 9.9 GB |
-| **Disk** | 75 GB (44% used, ~41 GB free — live 2026-07-31) | 96 GB (40% used, ~59 GB free — live 2026-07-31) |
+| **Disk** | 75 GB (**55% used, ~33 GB free — live 2026-09-09**, JR Hermes Ingestor S41) | 96 GB (40% used, ~59 GB free — live 2026-07-31) |
 | **WireGuard (`jr-wg0`)** | `10.77.0.1` — static tunnel to Contabo, S29 | `10.77.0.2` — static tunnel to Hetzner, S29 |
 | **OS** | Ubuntu 24.04.4 LTS | Ubuntu 24.04 LTS |
 | **`HERMES_ROLE`** | `ingestion` | `compute` |
