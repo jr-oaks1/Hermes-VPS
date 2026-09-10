@@ -249,22 +249,69 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 
 ### PostgreSQL roles
 
-| Role | DB | Privileges | Used by |
-|---|---|---|---|
-| `postgres` | all | SUPERUSER | Break-glass only |
-| `hermes_v2` | `hermes_v2` | owner | hermes_v2 service |
-| `cyclestation` | `hermes_v2` (schema `cyclestation`) | USAGE + DML on cyclestation.* | cyclestation service |
-| `pgbackup` | all | CONNECT + SELECT | pg_backup.sh (read-only dumps) |
-| `replicator` | — | REPLICATION | Contabo streaming replica |
-| `cs_admin` | `crypto_signals` | owner (no superuser) | crypto-signals admin tasks |
-| `cs_writer` | `crypto_signals` | INSERT/UPDATE/SELECT | crypto-signals Docker containers |
-| `cs_reader` | `crypto_signals` | SELECT | crypto-signals read-only consumers |
-| `parity_reader` | `parity` (empty holding DB) | LOGIN + CONNECT only, **no role memberships** | Clevious VPS `contabo_tier1_watch.py` — reads the 5 replication-critical GUCs from the primary for the standby-parity check (JR Hermes VPS S20 / Clevious S51 C1-A). `pg_hba`-scoped to `100.121.245.4/32`. Deliberately **not** `pg_monitor` (S19.4 `primary_conninfo` cleartext lesson). |
+> **Reconciled live S21 (2026-09-10)** against `pg_roles` / `pg_database` /
+> `pg_hba_file_rules` / `information_schema.role_table_grants` on both hosts.
+> Read-only inventory — nothing changed. Prior versions of this table were
+> ~9 rows and pre-dated the crypto_signals→Contabo move, the hermes_v2
+> decommission, and the least-privilege DB split.
 
-> **Table is stale** beyond the rows above — the Hetzner `:5432` cluster also carries
-> `audit_reader` (S19.4, GM-owned) and the standby has its own readers; `hermes_vps` /
-> `hermes_ingestor` live on other DBs/clusters. A full roles-table reconciliation is pending
-> (noted JR Hermes VPS S20 handoff).
+#### Databases — Hetzner `:5432` primary (replicated verbatim to the Contabo `:5432` standby)
+
+| DB | Owner | Purpose |
+|---|---|---|
+| `hermes_v2` | `postgres` | Shared app DB (TimescaleDB). `public` schema holds `hermes_v2` ×34 tables + 2 views, `hermes_ingestor` ×18, `crypto_signals_research` ×4; separate schema `cyclestation` (owner `cyclestation`) ×7. |
+| `hermes_v2_log` | `hermes_v2_writer` | hermes_v2 findings/log DB (1 table). |
+| `hermes_vps_log` | `hermes_vps_writer` | **This project's** findings log — `findings_log` TimescaleDB hypertable, **no retention** (Rule T-LOG.3). |
+| `hermes_ingestor_log` | `postgres` | JR Hermes Ingestor findings DB (added ~S11; its 1 table is `postgres`-owned — intended owner not confirmed S21). |
+| `vps_orchestrator_findings` | `vps_orchestrator` | GM unified cross-VPS findings DB — the dual-write target. |
+| `parity` | `postgres` | Empty holding DB for the Clevious standby-parity check (S20). |
+
+#### Roles — Hetzner `:5432` primary (18 login roles + 1 NOLOGIN). No role has `VALID UNTIL` set.
+
+| Role | Scope | Privilege | Owns | Used by / provenance |
+|---|---|---|---|---|
+| `postgres` | cluster | SUPERUSER | `hermes_v2`, `hermes_ingestor_log`, `parity`, `template1` DBs | Break-glass only |
+| `replicator` | — | `REPLICATION` | — | Contabo streaming standby (`pg_hba`: `replication` ← `100.121.245.4/32`) |
+| `pgbackup` | all DBs | member of `pg_read_all_data`; explicit `SELECT` on `vps_orchestrator_findings` | — | Centralized `pg_backup.sh` read-only dumps |
+| `hermes_v2` | `hermes_v2` DB | full DML on `public` | 34 tables + 2 views + 3 seq in `hermes_v2.public` | hermes_v2 service (**decommissioned** — `hermes_v2.service` stopped/disabled since Ingestor S8); residual readers still hold grants (e.g. `walk_forward_monitor` via `SELECT` on `public.sentiment`, S15) |
+| `hermes_v2_writer` | `hermes_v2_log` DB | owner; full DML | `hermes_v2_log` DB + its table/seq | hermes_v2 logging writer |
+| `cyclestation` | `hermes_v2` DB, schema `cyclestation` | full DML on `cyclestation.*` | schema `cyclestation` — 7 tables + 7 seq | cyclestation service (`/opt/cyclestation`) |
+| `hermes_ingestor` | `hermes_v2` DB | full DML on `public` | 18 tables + 3 seq in `hermes_v2.public` (least-privilege split) | JR Hermes Ingestor service (`hermes-ingestor.service`, port 8003) |
+| `hermes_log_writer` | `hermes_ingestor_log` DB | `INSERT`/`SELECT`/`UPDATE` on `public` (1 table) | — (table `postgres`-owned) | JR Hermes Ingestor findings sink |
+| `hermes_vps` | `hermes_vps_log` DB | full DML on `public` (3 objs incl. `findings_log` hypertable) | — | **This project's** runtime role — guardrail / escalation / health-check / `log_finding.py` (has `UPDATE` on `findings_log`, S19b) |
+| `hermes_vps_writer` | `hermes_vps_log` DB (owner); `vps_orchestrator_findings` (`I`/`S`/`U`) | owner of `hermes_vps_log` | `hermes_vps_log` DB + `findings_log` table/seq | **This project's** schema-owner + the GM dual-write path |
+| `audit_reader` | `hermes_v2`, `hermes_v2_log`, `hermes_vps_log` | member of `pg_read_all_stats`; `SELECT`-only | — | GM cross-host read-only monitoring (`pg_hba` ← `100.64.0.0/10`). S19.4 **removed** `pg_monitor` (it exposed `primary_conninfo` cleartext) |
+| `findings_reader` | `vps_orchestrator_findings` | `SELECT` | — | GM unified-findings reader (`pg_hba` ← `100.121.245.4/32`) |
+| `findings_writer` | `vps_orchestrator_findings` | `INSERT`/`SELECT`/`UPDATE` | — | Project dual-write into the GM findings DB (`pg_hba` ← `100.121.245.4/32`) |
+| `vps_orchestrator` | `vps_orchestrator_findings` | **NOLOGIN**; owner | `vps_orchestrator_findings` DB + its table | GM — ownership identity only, not a login |
+| `parity_reader` | `parity` DB only | `CONNECT` only, **conn-limit 3**, no memberships | — | Clevious VPS `contabo_tier1_watch.py` standby-parity GUC read (S20 / Clevious S51 C1-A; `pg_hba` ← `100.121.245.4/32`). Deliberately **not** `pg_monitor` (S19.4 cleartext lesson) |
+| `crypto_signals_research` | `hermes_v2` DB | full DML on `public` | 4 tables in `hermes_v2.public` (incl. `sentiment`) | crypto-signals research jobs (sentiment ingestion etc.) |
+| `ag_btc_reader` | `hermes_v2` DB | `SELECT`-only | — | `AG BTC signals` — read-only consumer of hermes_v2 data |
+| `market_sentinel_reader` | `hermes_v2` DB, schema `cyclestation` | `SELECT` on **1 table only** | — | `market-sentinel` project — narrow single-table read |
+| `crypto_platform` | `hermes_v2` DB | `CONNECT` + `public` `USAGE` only — **no table grants** | — | Consumer unconfirmed as of S21; holds no data access. Candidate for a review / possible drop |
+
+#### Contabo `:5434` — crypto_signals PRIMARY (separate cluster, **not** JR-Hermes-VPS-owned)
+
+Authority: `Clevious VPS`, `PionexBots`, `JR_VPS_Orchestrators` docs. Login roles (S21 live):
+`audit_reader`, `clevious_audit_reader`, `clevious_writer`, `crypto_user`, `cs_admin`,
+`cs_reader`, `cs_writer`, `findings_reader`, `orch_reader`, `orch_replicator`, `orch_writer`,
+`pgbackup`, `pionex_reader`, `pionex_writer`. DBs: `crypto_signals` (`cs_admin`),
+`clevious_vps_log` (`clevious_writer`), `vps_orchestrator` (`postgres`).
+
+#### Cross-host `pg_hba` grants into the Hetzner `:5432` primary (error-free rules, S21)
+
+| DB | Role | Source CIDR | Meaning |
+|---|---|---|---|
+| `replication` | `replicator` | `100.121.245.4/32` | Contabo streaming standby |
+| `hermes_v2` | `hermes_v2` | `100.121.245.4/32` | Contabo-side hermes_v2 consumers |
+| `hermes_v2` | `audit_reader` | `100.64.0.0/10` | GM cross-host read |
+| `hermes_v2_log` | `audit_reader` | `100.64.0.0/10` | GM cross-host read |
+| `hermes_vps_log` | `audit_reader` | `100.64.0.0/10` | GM cross-host read |
+| `vps_orchestrator_findings` | `findings_reader` | `100.121.245.4/32` | GM |
+| `vps_orchestrator_findings` | `findings_writer` | `100.121.245.4/32` | Project dual-write |
+| `parity` | `parity_reader` | `100.121.245.4/32` | Clevious parity check (S20) |
+
+Backup of the pre-S20 file: `/etc/postgresql/16/main/pg_hba.conf.bak-s20`.
 
 ---
 
