@@ -163,20 +163,22 @@ for u in hermes-vps-guardrail hermes-vps-escalation; do
 done
 echo "   ok: both units clean after their deploy-check runs"
 # 9b — check_failed_units() must exclude the two own units from CRITICAL.
+# `systemctl list-units --no-legend` emits NO header line — the fakes match that.
 "$PY" - <<'PYEOF'
 import sys
 sys.path.insert(0, "scripts"); sys.path.insert(0, "scripts/audit")
 from unittest import mock
 import hermes_vps_guardrail as g
-fake = "UNIT LOAD ACTIVE SUB\nhermes-vps-guardrail.service loaded failed failed x\nhermes-vps-escalation.service loaded failed failed x\n"
+own = ("hermes-vps-guardrail.service loaded failed failed x\n"
+       "hermes-vps-escalation.service loaded failed failed x\n")
 with mock.patch.object(g.subprocess, "run",
-                       return_value=mock.Mock(stdout=fake, returncode=0)):
+                       return_value=mock.Mock(stdout=own, returncode=0)):
     out = g.check_failed_units()
 assert len(out) == 1 and out[0].severity == "info", out
 assert "own units excluded" in (out[0].detail or ""), out
-fake2 = fake + "some-other.service loaded failed failed x\n"
 with mock.patch.object(g.subprocess, "run",
-                       return_value=mock.Mock(stdout=fake2, returncode=0)):
+                       return_value=mock.Mock(stdout=own + "some-other.service loaded failed failed x\n",
+                                              returncode=0)):
     out = g.check_failed_units()
 assert len(out) == 1 and out[0].severity == "critical", out
 assert "some-other.service" in out[0].detail and "1 failed unit(s)" in out[0].summary, out
