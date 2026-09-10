@@ -155,8 +155,36 @@ action_status IN ('open','in_progress') AND summary NOT LIKE 'escalation:%' AND
 summary NOT LIKE 'systemd:%' …` → **0 rows** before the fix. No real finding was
 masked or swept.
 
-## 6. Interaction / numbering ground rule
+## 6. Pendings — full list (for seamless continuation)
+
+### Yours to direct (JR Hermes VPS)
+
+| # | Item | Status / next step |
+|---|---|---|
+| P1 | **`hermes-ingestor.service` hardening** — add 3 `ExecStartPre=/usr/bin/test -d /opt/hermes-ingestor/{data,logs,models}` lines (between `EnvironmentFile=` and `ExecStart=`) + set `HEALTHCHECK_HEARTBEAT_ENABLED=true` in `/opt/hermes-ingestor/.env`, then **restart Ingestor's production `hermes-ingestor.service`**. | **Half-done.** S19b applied the `hermes-healthcheck.service` half (`ReadWritePaths` — heartbeat file writes now). This half was requested of the Branch Manager in S36 but restarts Ingestor's prod service → needs explicit user go-ahead, or hand to an Ingestor session. Exact diffs: `docs/CROSS-PROJECT-NOTICE-2026-09-07-ingestor-s36-healthcheck-unit-hardening.md` §2. |
+| P2 | **`VPS_CONNECTIVITY_REFERENCE.md` roles-table reconciliation** — table is missing `hermes_vps`, `audit_reader`, `hermes_ingestor`, `parity_reader`; predates several splits. | Deferred since S20. Housekeeping pass, any time, nothing broken. |
+| P3 | **Commit the mirrored reply notice** in `JR Hermes Ingestor/docs/` + `JR_VPS_Orchestrators/docs/` | Dropped this session (not committed) per the inbound-notice convention. Each project picks it up. |
+
+### Handed to other projects (S19b reply notice: `docs/CROSS-PROJECT-NOTICE-REPLY-2026-09-10-s19b-to-ingestor-gm-deadlock-fixed.md`)
+
+| # | Item | Owner |
+|---|---|---|
+| X1 | Check / bulk-triage `vps_orchestrator_findings` for storm CRITICALs mirrored via `_mirror_to_gm_ladder` (2026-09-08→10), then **close the S41 escalation**. `FINDINGS_DB_URL` is set in our escalation env; the mirror fired latch-gated per GM-band row (not 40k — bounded to distinct escalated rows). | **GM** |
+| X2 | Consider making `healthcheck.sh` exit 0 when it only *finds* something (the exact antipattern that seeded this storm — see the new memory `reference_monitoring_exit_code_contract.md`). | **JR Hermes Ingestor** |
+| X3 | `/opt/hermes_v2` teardown + strip the stale shadowed `FRED_API_KEY` in `/opt/hermes_v2/.env`. | **JR Hermes Ingestor** (escalated S16) |
+
+### Pre-existing, other projects *(from prior handoffs — not re-verified live S19b)*
+
+| # | Item | Owner |
+|---|---|---|
+| Y1 | Wire `parity_reader` into `contabo_tier1_watch.py` | Clevious VPS (their S52) |
+| Y2 | Raise Contabo standby `max_wal_senders` (10→16) + `max_locks_per_transaction` (512→1024) + restart — zero headroom vs primary | Clevious VPS (S51 C1-B) |
+| Y3 | Cross-host TimescaleDB pkg divergence (2.29.2 Hetzner / 2.29.1 Contabo, different apt repos) — latent at next PG restart | GM (escalated S19) |
+| Y4 | Clevious S50 R5 detection-control naming — awaiting Clevious confirming the param-diff check is live | Clevious VPS |
+
+## 7. Interaction / numbering ground rule
 
 `#Interaction NN` opener + hallucination-zone flagging observed throughout.
 Session = S19 (user-stated); handoff = `S19b-HANDOFF.md` by user's explicit call
-(S19 + S20 already on disk). Next session verifies disk before numbering — expect S21.
+(S19 + S20 already on disk from 2026-09-07). Next session verifies disk before
+numbering — expect **S21**.
