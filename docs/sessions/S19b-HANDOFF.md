@@ -25,19 +25,14 @@ Nothing open blocks this project. First checks:
 - `psql "$HERMES_VPS_LOG_DB_URL" -c "SELECT date_trunc('hour',ts),count(*) FROM findings_log WHERE severity<>'info' AND ts>now()-interval '6h' GROUP BY 1 ORDER BY 1 DESC"`
   → steady state ≈ 0/hour.
 
-**Open threads (external):**
-- **GM** — `vps_orchestrator_findings` likely received mirrored CRITICALs from the
-  storm (`FINDINGS_DB_URL` is set in our escalation env; `_mirror_to_gm_ladder`
-  fired latch-gated per GM-band row). GM to check / bulk-triage their side. Source
-  stopped. S41 escalation can close.
-- **JR Hermes Ingestor** — reply notice filed
-  (`docs/CROSS-PROJECT-NOTICE-REPLY-2026-09-10-s19b-to-ingestor-gm-deadlock-fixed.md`).
-  Two asks back to them: (1) consider `healthcheck.sh` exit 0 on a *finding* (the
-  same antipattern; it seeded this storm); (2) they own arming
-  `HEALTHCHECK_HEARTBEAT_ENABLED=true` in `/opt/hermes-ingestor/.env` +
-  `hermes-ingestor.service` `ExecStartPre` guards (their prod service restart).
-- `/opt/hermes_v2` teardown + stale shadowed `FRED_API_KEY` in
-  `/opt/hermes_v2/.env` — still escalated to Ingestor (S16); untouched here.
+**Open threads (see §6 for the full table):**
+- **GM** (X1) — bulk-triage `vps_orchestrator_findings` for mirrored storm CRITICALs,
+  then close the S41 escalation. Only external item still needing action.
+- **JR Hermes VPS** (P2) — `VPS_CONNECTIVITY_REFERENCE.md` roles-table reconciliation
+  (housekeeping, nothing broken).
+- **Ingestor** (X3) — `/opt/hermes_v2` teardown + stale `FRED_API_KEY` (escalated S16).
+- Concurrent **Ingestor S42** already closed X2 (`healthcheck.sh` exit-0-on-finding)
+  and armed the heartbeat + restarted their prod service (was P1) — verified live.
 
 ---
 
@@ -157,21 +152,29 @@ masked or swept.
 
 ## 6. Pendings — full list (for seamless continuation)
 
+> **A concurrent JR Hermes Ingestor session (S42) ran during/just after S19b** — it
+> verified the fix live (their F7 → RESOLVED, `findings_log` #74 resolved), committed
+> the reply notice into their repo (`69d0d2d`), **closed X2** (`healthcheck.sh` now
+> exits 0 on a finding — `22c3dc8`/`c895c0d`) and **closed the P1 arming + prod
+> restart** (`HEALTHCHECK_HEARTBEAT_ENABLED=true` in `/opt/hermes-ingestor/.env`;
+> `hermes-ingestor.service` restarted clean 11:27 UTC 2026-09-10, `NRestarts=0`).
+> Verified live from the host this session. Our two units stayed green throughout.
+
 ### Yours to direct (JR Hermes VPS)
 
 | # | Item | Status / next step |
 |---|---|---|
-| P1 | **`hermes-ingestor.service` hardening** — add 3 `ExecStartPre=/usr/bin/test -d /opt/hermes-ingestor/{data,logs,models}` lines (between `EnvironmentFile=` and `ExecStart=`) + set `HEALTHCHECK_HEARTBEAT_ENABLED=true` in `/opt/hermes-ingestor/.env`, then **restart Ingestor's production `hermes-ingestor.service`**. | **Half-done.** S19b applied the `hermes-healthcheck.service` half (`ReadWritePaths` — heartbeat file writes now). This half was requested of the Branch Manager in S36 but restarts Ingestor's prod service → needs explicit user go-ahead, or hand to an Ingestor session. Exact diffs: `docs/CROSS-PROJECT-NOTICE-2026-09-07-ingestor-s36-healthcheck-unit-hardening.md` §2. |
-| P2 | **`VPS_CONNECTIVITY_REFERENCE.md` roles-table reconciliation** — table is missing `hermes_vps`, `audit_reader`, `hermes_ingestor`, `parity_reader`; predates several splits. | Deferred since S20. Housekeeping pass, any time, nothing broken. |
-| P3 | **Commit the mirrored reply notice** in `JR Hermes Ingestor/docs/` + `JR_VPS_Orchestrators/docs/` | Dropped this session (not committed) per the inbound-notice convention. Each project picks it up. |
+| ~~P1~~ | ~~`hermes-ingestor.service` hardening + heartbeat arm + prod restart~~ | **DONE** by Ingestor S42 (arm + restart). The optional `ExecStartPre=/usr/bin/test -d` dir guards on `hermes-ingestor.service` were **not** added — Ingestor (code owner) wired the heartbeat in-script on every path instead and considers S67 fault A covered. Nothing owed here. |
+| P2 | **`VPS_CONNECTIVITY_REFERENCE.md` roles-table reconciliation** — table is missing `hermes_vps`, `audit_reader`, `hermes_ingestor`, `parity_reader`; predates several splits. | Deferred since S20. Housekeeping pass, any time, nothing broken. **Only open JR-Hermes-VPS-owned item.** |
+| P3 | GM copy of the reply notice (`JR_VPS_Orchestrators/docs/…s19b-to-ingestor-gm-deadlock-fixed.md`) is dropped, not committed | Left for GM to pick up (concurrent-session safety — do not commit into the GM repo). Ingestor already committed theirs. |
 
 ### Handed to other projects (S19b reply notice: `docs/CROSS-PROJECT-NOTICE-REPLY-2026-09-10-s19b-to-ingestor-gm-deadlock-fixed.md`)
 
-| # | Item | Owner |
-|---|---|---|
-| X1 | Check / bulk-triage `vps_orchestrator_findings` for storm CRITICALs mirrored via `_mirror_to_gm_ladder` (2026-09-08→10), then **close the S41 escalation**. `FINDINGS_DB_URL` is set in our escalation env; the mirror fired latch-gated per GM-band row (not 40k — bounded to distinct escalated rows). | **GM** |
-| X2 | Consider making `healthcheck.sh` exit 0 when it only *finds* something (the exact antipattern that seeded this storm — see the new memory `reference_monitoring_exit_code_contract.md`). | **JR Hermes Ingestor** |
-| X3 | `/opt/hermes_v2` teardown + strip the stale shadowed `FRED_API_KEY` in `/opt/hermes_v2/.env`. | **JR Hermes Ingestor** (escalated S16) |
+| # | Item | Owner | Status |
+|---|---|---|---|
+| X1 | Check / bulk-triage `vps_orchestrator_findings` for storm CRITICALs mirrored via `_mirror_to_gm_ladder` (2026-09-08→10), then **close the S41 escalation**. Mirror fired latch-gated per GM-band row (bounded to distinct escalated rows, not 40k). | **GM** | OPEN |
+| ~~X2~~ | ~~`healthcheck.sh` exit 0 on a finding~~ | JR Hermes Ingestor | **DONE S42** (`22c3dc8`) — see `reference_monitoring_exit_code_contract.md` |
+| X3 | `/opt/hermes_v2` teardown + strip the stale shadowed `FRED_API_KEY` in `/opt/hermes_v2/.env`. | **JR Hermes Ingestor** (escalated S16) | OPEN |
 
 ### Pre-existing, other projects *(from prior handoffs — not re-verified live S19b)*
 
