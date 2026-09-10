@@ -109,6 +109,45 @@ finding/Telegram alert.
 | Y3 | Cross-host TimescaleDB pkg divergence (2.29.2 Hetzner / 2.29.1 Contabo, different apt repos) — latent at next PG restart | GM (escalated S19) | OPEN |
 | Y4 | Clevious S50 R5 detection-control naming — awaiting Clevious confirming the param-diff check is live | Clevious VPS | OPEN |
 
+## 4b. Deep forensic audit (2026-09-10, read-only sweep of the Hetzner host)
+
+Host is genuinely healthy — **no CRITICAL or HIGH findings.** S19b deadlock fix
+verified holding: **0 unit failures since 10:00 UTC**, guardrail + escalation
+cycles all clean, `deploy_guardrail.sh` all 9 assertions pass, steady-state
+emission ~1 row/hr. `is-system-running`=running, 0 failed units, replication
+`streaming/async/0`, `contabo_replica` slot reserved+active, `findings_log`
+0 open/in_progress (40,113 rows total — 39,772 `no_action_needed` W/C are S19b
+storm residue, no-retention by design per T-LOG.3, stable/not growing). Backups:
+`pg_backup.service` 02:31 today exit 0, all 4 configured DBs OK + off-site synced
+to Contabo, 7-dump retention enforced. netdata 102 alarms all CLEAR. TLS
+`artek-studio.com` → Oct 19, certbot renewed 08:14 today. UFW active, fail2ban
+0 banned, 3 auth failures/24h. Tailscale key-expiry disabled both nodes, Docker
+masked, NTP synced. unattended-upgrades on, `Automatic-Reboot=false` (matches
+Clevious S44 R5).
+
+### MEDIUM
+| # | Finding | Owner |
+|---|---|---|
+| A1 | **`hermes_ingestor_log` DB has zero backup coverage** — not in `/etc/pg_backup.conf` `DATABASES=`, no `/opt/backups/` dir. It is JR Hermes Ingestor's permanent continuous-improvement findings record. The backup job config is JR-Hermes-VPS-owned; the DB is Ingestor's. → cross-project notice to Ingestor to register it (one line in `/etc/pg_backup.conf` + a smoke-tested run). | JR Hermes VPS + Ingestor |
+| A2 | **`:5435` orch cluster `vps_orchestrator` DB (~950 MB) is dumped to only a ~30 MB file** (`/opt/backups/vps_orchestrator/…_013016.dump`, 01:30 daily) by a mechanism **outside** `/etc/pg_backup.conf`. Could be legit compression, could be schema-only/partial. Coverage unverified. | GM |
+
+### LOW
+| # | Finding |
+|---|---|
+| B1 | **X3 still open** (known, Ingestor-escalated S16): 5 timers still fire from `/opt/hermes_v2` (`walk_forward_monitor`, `bronze-audit-daily/weekly`, `funnel_scoring`, `server_health_audit`) + `hermes_v2.service` (disabled) + dead `prometheus.service` unit file. `/opt/hermes_v2` = 1.8 GB. |
+| B2 | `/opt` housekeeping ~7 GB: `/opt/hermes-ingestor.backup-pre-s{25,27,27b,28}` + `-pre-s{14,16}-*` ≈ 4.4 GB (Ingestor, known S16); `/opt/backups/hermes_v2/manual` 2.4 GB stale manual dumps (Sep 2, no retention); `/opt/archives` 552 MB. Disk 54% — no pressure. |
+| B3 | `sshd` binds `0.0.0.0:22` (+ `:52222`) though design intends port 22 Tailscale-only; only UFW's eth0 default-deny protects `:22`, with `permitrootlogin without-password`. Consider `ListenAddress 100.97.62.7` + loopback. Defense-in-depth only. |
+| B4 | Old kernel `linux-image-6.8.0-137` retained alongside running `-139`. |
+| B5 | Stale 4-day-idle root SSH session from `jrminipc` (`100.113.177.23`, user's own box, `root@notty` — likely a leftover ControlMaster/port-forward). |
+| B6 | `telegram_outbox.jsonl.1.pre-s19b` (5.4 MB) + `.storm-s19b-archive` (8 MB) kept uncompressed in `/var/lib/hermes-vps/` (deliberate S19b record; gzip candidate). |
+| B7 | = **Y3** (GM, escalated S19): TimescaleDB runtime 2.29.0 vs installed pkg 2.29.2; 2 apt packages held back — latent divergence at next PG restart. |
+| B8 | `crypto_platform` login role — `CONNECT` + `public` `USAGE` on `hermes_v2`, **zero table grants**, no active connections. Candidate `DROP ROLE` after confirming no `crypto_data`-style consumer. |
+
+**Actioned this session:** `/opt/hermes-vps` deploy clone fast-forwarded to
+`b026634` (was 1 commit behind — S21 doc commits only, no service impact).
+Nothing else changed — all MEDIUM/LOW items are either cross-project or need the
+staged-smoke-test path.
+
 ## 5. Interaction / numbering ground rule
 
 `#Interaction NN` opener + hallucination-zone flagging observed throughout.
