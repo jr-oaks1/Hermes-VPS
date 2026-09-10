@@ -266,6 +266,12 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | `vps_orchestrator_findings` | `vps_orchestrator` | GM unified cross-VPS findings DB — the dual-write target. |
 | `parity` | `postgres` | Empty holding DB for the Clevious standby-parity check (S20). |
 
+> The host also runs a **second cluster `16/orch` on `:5435`** (data dir
+> `/var/lib/postgresql/16/orch`), holding the GM's `vps_orchestrator` DB (~950 MB).
+> Its only role is `postgres`; `listen_addresses` includes `100.97.62.7` but every
+> `pg_hba` rule is localhost-only (127.0.0.1/::1) so it is not remotely reachable.
+> GM-owned — see §18/§19. Re-confirmed live S21.
+
 #### Roles — Hetzner `:5432` primary (18 login roles + 1 NOLOGIN). No role has `VALID UNTIL` set.
 
 | Role | Scope | Privilege | Owns | Used by / provenance |
