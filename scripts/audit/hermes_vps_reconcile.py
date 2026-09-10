@@ -71,7 +71,8 @@ def _read_db_rows(db_url: str, since: datetime) -> list[dict]:
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT id, ts, severity, summary, event_uid, telegram_sent
+                SELECT id, ts, severity, summary, event_uid, telegram_sent,
+                       action_status, session_ref
                   FROM findings_log
                  WHERE ts >= %s AND severity <> 'info'
                 """,
@@ -128,6 +129,11 @@ def reconcile(db_url: str, window_hours: int = 24) -> list[Finding]:
         and not _is_meta(r)                         # meta-check output is exempt (feedback loop)
         and not r.get("telegram_sent")
         and r["event_uid"] not in outbox_by_uid
+        # S19b: a row a human has dispositioned (no_action_needed / resolved /
+        # closed) is not an actionable dual-write orphan. Without this,
+        # ~30k triaged storm rows re-fire orphan_db CRITICAL every 15 min for
+        # the whole 24h window — a feedback loop of its own.
+        and r.get("action_status", "open") in ("open", "in_progress")
     ]
 
     n_ot, n_od, n_df = len(orphan_telegram), len(orphan_db), len(delivery_failed)
