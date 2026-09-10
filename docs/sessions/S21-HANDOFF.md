@@ -159,14 +159,32 @@ Clevious S44 R5).
   `docs/CROSS-PROJECT-NOTICE-2026-09-10-jr-hermes-vps-s21-to-GM-orch-cluster-backup.md`
   (GM — verify the `:5435` `vps_orchestrator` dump is full + off-sited).
 
-**Nothing else is independently actionable.** B1/B7 are cross-project (escalated
-S16/S19). B2 (delete stale 2.4 GB manual dumps + 578 MB `/opt/archives` legacy
-`crypto_db_v1` archive) and B8 (`DROP ROLE crypto_platform`) are destructive and
-need explicit user approval + consumer confirmation. B3 (sshd `ListenAddress`)
-and B4 (`apt autoremove` old kernel `-137`) are host changes with no urgency
-(disk 54%) — left for the user to green-light. B5 is on the user's own machine.
-Note surfaced: `pg_backup.sh` (`/opt/backups/scripts/`) is **GM-owned and not in
-any git repo** — GM's to vendor.
+### Host cleanup — done on explicit user authorization (later in S21)
+
+Disk **54% → 47%** (~5 GB freed). Host `running`, 0 failed units, 0 open
+findings, replication `streaming/async`, `deploy_guardrail.sh` 9/9 after.
+
+- **B4** — `apt autoremove --purge` ran; freed 124 MB (`libllvm17t64`). Ubuntu
+  deliberately keeps `linux-image-6.8.0-137` as the one-prior-kernel fallback —
+  not auto-removable, correct default, not forced.
+- **B2 part 1** — `/opt/backups/hermes_v2/manual/` deleted (~2.4 GB: S68 repair
+  dumps from Sep 2 + Aug-12 `raw_onchain` files). Safety net: 7 automated
+  `hermes_v2` daily dumps local + 7 off-site on Contabo. `manual/` dir removed.
+- **B2 part 2 / B1** — 6 stale Ingestor deploy-rollback snapshots under `/opt/`
+  deleted (~2.6 GB, dated Aug 27–Sep 4, all superseded — live `/opt/hermes-ingestor`
+  clean at `f064750`). **`/opt/hermes-ingestor-staging` NOT touched** (active
+  today). This closes the S16-escalated `/opt` clutter item.
+  → notice: `docs/CROSS-PROJECT-NOTICE-2026-09-10-jr-hermes-vps-s21-ingestor-host-cleanup.md`
+- **`/opt/archives/crypto_db_v1_archive_20260518.dump` (578 MB) — LEFT IN PLACE.**
+  Verified S21: no `crypto*` DB exists on Hetzner `:5432`, no copy on Contabo —
+  this is the **sole surviving copy** of a decommissioned DB's data. Deleting it
+  needs an explicit informed decision, not general cleanup authorization. Open
+  question for the user.
+
+**Still not independently actionable:** B7 (Y3, GM). B8 (`DROP ROLE
+crypto_platform`) — needs consumer confirmation. B3 (sshd `ListenAddress`) — host
+change, no urgency, user to green-light. B5 — user's own machine. `pg_backup.sh`
+(`/opt/backups/scripts/`) is **GM-owned and unversioned** — GM's to vendor.
 
 ## 5. Interaction / numbering ground rule
 
