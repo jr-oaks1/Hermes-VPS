@@ -43,9 +43,9 @@ Live healthcheck runs this session still log, every 10-min cycle:
 
 ---
 
-## S41 update (2026-09-09, ~23:30 UTC) — still failing, ~1 day later
+## S39 (phase 3) update (2026-09-09, ~23:35 UTC) — still failing, ~1 day later
 
-JR Hermes Ingestor's S41 forensic DB audit re-confirmed both items live:
+JR Hermes Ingestor's S39 trust-recovery forensic DB audit re-confirmed both items live:
 
 - `systemctl --failed` on the host still lists **only** `hermes-vps-escalation.service`
   and `hermes-vps-guardrail.service` — both `loaded failed failed`, still looping on
