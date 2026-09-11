@@ -266,6 +266,57 @@ def check_ssh_auth_anomalies() -> list[Finding]:
         return [Finding("error", "warning", "ssh.auth: check failed", str(e))]
 
 
+_CLOUDFLARE_IPS_URL = "https://api.cloudflare.com/client/v4/ips"
+_HCLOUD_FIREWALLS_URL = "https://api.hetzner.cloud/v1/firewalls"
+
+
+def check_cloud_firewall_cidr_drift() -> list[Finding]:
+    """H9 (S23): the Hetzner Cloud provider firewall's 80/443 rules were narrowed
+    from 'Any IPv4/IPv6' to Cloudflare's published CIDR ranges (previously
+    rejected at S28 §13.2 as a hand-maintained list that could go stale silently
+    — see VPS_CONNECTIVITY_REFERENCE.md §4). This check is what makes that
+    rejection's actual concern (silent drift) no longer silent: it re-fetches
+    Cloudflare's live list every run and diffs it against whatever the cloud
+    firewall currently allows on 80/443, emitting WARNING the moment they
+    disagree — before it becomes an outage (Cloudflare adds a range and traffic
+    from it gets dropped) or a security gap (a stale rule outlives Cloudflare's
+    removal of a range). Read-only: never modifies the firewall itself.
+    """
+    token = os.environ.get("HCLOUD_API_TOKEN", "")
+    firewall_id = os.environ.get("HCLOUD_FIREWALL_ID", "")
+    if not token or not firewall_id:
+        return [Finding("finding", "info",
+                        "cloud-firewall.cidr-drift: skipped (HCLOUD_API_TOKEN/HCLOUD_FIREWALL_ID not set)")]
+    try:
+        cf = requests.get(_CLOUDFLARE_IPS_URL, timeout=10)
+        cf.raise_for_status()
+        cf_result = cf.json()["result"]
+        expected = set(cf_result["ipv4_cidrs"]) | set(cf_result["ipv6_cidrs"])
+
+        hc = requests.get(f"{_HCLOUD_FIREWALLS_URL}/{firewall_id}",
+                          headers={"Authorization": f"Bearer {token}"}, timeout=10)
+        hc.raise_for_status()
+        rules = hc.json()["firewall"]["rules"]
+        actual: set[str] = set()
+        for r in rules:
+            if r.get("port") in ("80", "443") and r.get("protocol") == "tcp":
+                actual |= set(r.get("source_ips", []))
+
+        missing = expected - actual    # Cloudflare ranges NOT allowed in — future false-block risk
+        extra = actual - expected      # allowed ranges Cloudflare no longer publishes — stale, tighten later
+
+        if not missing and not extra:
+            return [Finding("finding", "info",
+                            f"cloud-firewall.cidr-drift: in sync ({len(expected)} ranges)")]
+        detail = (f"missing={sorted(missing)[:5]}{'...' if len(missing) > 5 else ''}, "
+                 f"extra={sorted(extra)[:5]}{'...' if len(extra) > 5 else ''}")
+        return [Finding("finding", "warning",
+                        f"cloud-firewall.cidr-drift: {len(missing)} missing / {len(extra)} stale "
+                        f"vs Cloudflare's current list", detail)]
+    except Exception as e:  # noqa: BLE001
+        return [Finding("error", "warning", "cloud-firewall.cidr-drift: check failed", str(e))]
+
+
 def check_findings_table_size() -> list[Finding]:
     db_url = os.environ.get("HERMES_VPS_LOG_DB_URL", "")
     if not db_url:
@@ -339,6 +390,7 @@ def collect() -> list[Finding]:
     raw += check_nginx_root_path()
     raw += check_findings_table_size()
     raw += check_ssh_auth_anomalies()
+    raw += check_cloud_firewall_cidr_drift()
     return raw
 
 
