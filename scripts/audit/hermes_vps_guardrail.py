@@ -213,6 +213,59 @@ def check_nginx_root_path() -> list[Finding]:
                     detail="nginx `location = /` will 404 the public root of artek-studio.com")]
 
 
+_SSH_AUTH_WINDOW_MIN = 6      # guardrail cadence is 5 min; overlap slightly
+_SSH_AUTH_WARN, _SSH_AUTH_CRIT = 20, 100
+
+
+def check_ssh_auth_anomalies() -> list[Finding]:
+    """H6 (JR Hermes VPS S23): counts SSH auth-failure signals from the last
+    _SSH_AUTH_WINDOW_MIN minutes on ssh.service, including the failed-*key*-auth
+    class fail2ban cannot see on this key-only host (VPS_CONNECTIVITY_REFERENCE.md
+    §13.3: 'Connection closed by authenticating user ... [preauth]' does not match
+    fail2ban's filter) — this check is the only thing counting that class.
+
+    Not an intrusion-detection signal: key auth cannot be brute-forced, so a high
+    count here is noise/scan volume, not a compromise path (§13.3 again). Thresholds
+    are calibrated for DoS/scan visibility, not attack detection — hence generous
+    values and INFO (not WARNING) for any nonzero-but-low count.
+    """
+    try:
+        r = subprocess.run(
+            ["journalctl", "-u", "ssh.service", "--since", f"-{_SSH_AUTH_WINDOW_MIN} min", "-o", "cat"],
+            capture_output=True, text=True, timeout=15,
+        )
+        lines = r.stdout.splitlines()
+        invalid_or_failed = sum(1 for ln in lines if "Invalid user" in ln or "Failed password" in ln)
+        preauth_key_fail = sum(
+            1 for ln in lines
+            if "Connection closed by authenticating user" in ln and "[preauth]" in ln
+        )
+        total = invalid_or_failed + preauth_key_fail
+
+        banned = None
+        try:
+            fb = subprocess.run(["fail2ban-client", "status", "sshd"],
+                                capture_output=True, text=True, timeout=10)
+            for ln in fb.stdout.splitlines():
+                if "Currently banned" in ln:
+                    banned = ln.split(":")[-1].strip()
+        except Exception:  # noqa: BLE001
+            pass
+
+        detail = f"invalid-user/failed-password={invalid_or_failed}, preauth-key-fail={preauth_key_fail}"
+        if banned is not None:
+            detail += f", fail2ban-currently-banned={banned}"
+
+        summary = f"ssh.auth: {total} auth-anomaly event(s) in {_SSH_AUTH_WINDOW_MIN}min"
+        if total >= _SSH_AUTH_CRIT:
+            return [Finding("alert", "critical", summary, detail)]
+        if total >= _SSH_AUTH_WARN:
+            return [Finding("finding", "warning", summary, detail)]
+        return [Finding("finding", "info", summary, detail)]
+    except Exception as e:  # noqa: BLE001
+        return [Finding("error", "warning", "ssh.auth: check failed", str(e))]
+
+
 def check_findings_table_size() -> list[Finding]:
     db_url = os.environ.get("HERMES_VPS_LOG_DB_URL", "")
     if not db_url:
@@ -285,6 +338,7 @@ def collect() -> list[Finding]:
     raw += check_tls_expiry()
     raw += check_nginx_root_path()
     raw += check_findings_table_size()
+    raw += check_ssh_auth_anomalies()
     return raw
 
 

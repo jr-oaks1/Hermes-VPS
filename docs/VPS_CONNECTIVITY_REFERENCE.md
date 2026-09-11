@@ -204,10 +204,21 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | All | tailscale0 | Any (Tailscale) | Tailscale-routed traffic (catch-all) |
 
 > **Two firewalls, not one.** UFW is the host layer; the **Hetzner Cloud provider firewall
-> (`firewall-1`)** sits above it and is edited in the Hetzner console. A port must be open in
-> **both**. As of S28 the provider firewall has 5 inbound rules: ICMP, `80/tcp`, `443/tcp`,
-> `41641/udp`, `52222/tcp`, and no outbound rules (all egress allowed — required by
-> `cloudflared` and Tailscale).
+> (`firewall-1`, id `10976526`, applied to server id `129955563`)** sits above it. A port
+> must be open in **both**. As of S28 the provider firewall has 5 inbound rules: ICMP,
+> `80/tcp`, `443/tcp`, `41641/udp`, `52222/tcp`, all "Any IPv4/IPv6", and no outbound rules
+> (all egress allowed — required by `cloudflared` and Tailscale). **Re-verified live
+> 2026-09-11 (S22/S23) — unchanged**, both via a user console screenshot and, as of S23, via
+> the Hetzner Cloud API directly (see §5 for the new credential — this was previously
+> console-only, so past sessions edited it by hand).
+>
+> ⚠️ **S28 (§13.2) explicitly considered and rejected narrowing 80/443 here to Cloudflare's
+> CIDR ranges to match UFW** — reasoning: ~29 hand-maintained rules that Cloudflare
+> periodically revises, and a stale copy becomes a silent outage; UFW already enforces the
+> restriction, so a second drifting copy is worse than one control point. **S22 re-raised the
+> same gap independently as finding H9** without cross-referencing this prior decision — if
+> H9 is ever acted on, read this note first; the S28 reasoning may still hold (nothing about
+> Cloudflare's rate of IP-range change has been re-checked since).
 
 > Docker bridge 5432 rules removed 2026-06-26 after crypto-signals containers migrated to Contabo.
 > Docker daemon **actually stopped 2026-07-21** (S43's "disabled" claim was stale/inaccurate — it
@@ -246,6 +257,8 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | Contabo credentials | `C:\Users\jr250\.credentials\clevious-vps\credentials.env` (relocated out of OneDrive, S30; rotated S31 — see vault, not reproduced here) | Local reference; password SSH is disabled |
 | GitHub SSH key | `/root/.ssh/github_hermes` on Hetzner | git pull/push |
 | Contabo cross-node key | `/root/.ssh/contabo_sync` on Hetzner | rsync backup, automated SSH from Hetzner to Contabo |
+| Hetzner Cloud API token | `hetzner-cloud-credentials.env` (workspace root, plaintext by design — same pattern as `cloudflare-credentials.env`; see that file's own header for the reasoning) | Any Claude Code session, any project — manages `firewall-1` and other Cloud Project resources via `api.hetzner.cloud`. **Not IP-restricted** (Hetzner Cloud tokens have no allowlist feature, unlike the Cloudflare token) — file-location/scope discipline is its only boundary. Added 2026-09-11, S23. Usage + rules of engagement: user-scoped skill `~/.claude/skills/hetzner-cloud/SKILL.md` |
+| Cloudflare API token | `cloudflare-credentials.env` (workspace root) | Any Claude Code session, any project — `artek-studio.com` zone management. IP-restricted to Hetzner's public IPv4. Added 2026-09-11, S22 |
 
 ### PostgreSQL roles
 
