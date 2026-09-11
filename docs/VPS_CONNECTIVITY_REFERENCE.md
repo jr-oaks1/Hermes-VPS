@@ -251,7 +251,12 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 
 > **Reconciled live S21 (2026-09-10)** against `pg_roles` / `pg_database` /
 > `pg_hba_file_rules` / `information_schema.role_table_grants` on both hosts.
-> Read-only inventory — nothing changed. Prior versions of this table were
+> Read-only inventory — nothing changed at the time. **S22 (2026-09-11):**
+> dropped the orphaned `crypto_platform` role (0 grants, 0 connections, no
+> `crypto*` DB, no `/opt/crypto_platform`, no systemd refs; `pg_shdepend`
+> confirmed zero cluster-wide dependencies before the drop) — 18 → **17**
+> Hetzner `:5432` login roles. Roles-only snapshot at
+> `/opt/backups/manual/pg_globals_pre-s22.sql`. Prior versions of this table were
 > ~9 rows and pre-dated the crypto_signals→Contabo move, the hermes_v2
 > decommission, and the least-privilege DB split.
 
@@ -272,7 +277,7 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 > `pg_hba` rule is localhost-only (127.0.0.1/::1) so it is not remotely reachable.
 > GM-owned — see §18/§19. Re-confirmed live S21.
 
-#### Roles — Hetzner `:5432` primary (18 login roles + 1 NOLOGIN). No role has `VALID UNTIL` set.
+#### Roles — Hetzner `:5432` primary (17 login roles + 1 NOLOGIN, S22). No role has `VALID UNTIL` set.
 
 | Role | Scope | Privilege | Owns | Used by / provenance |
 |---|---|---|---|---|
@@ -294,7 +299,6 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | `crypto_signals_research` | `hermes_v2` DB | full DML on `public` | 4 tables in `hermes_v2.public` (incl. `sentiment`) | crypto-signals research jobs (sentiment ingestion etc.) |
 | `ag_btc_reader` | `hermes_v2` DB | `SELECT`-only | — | `AG BTC signals` — read-only consumer of hermes_v2 data |
 | `market_sentinel_reader` | `hermes_v2` DB, schema `cyclestation` | `SELECT` on **1 table only** | — | `market-sentinel` project — narrow single-table read |
-| `crypto_platform` | `hermes_v2` DB | `CONNECT` + `public` `USAGE` only — **no table grants** | — | Consumer unconfirmed as of S21; holds no data access. Candidate for a review / possible drop |
 
 #### Contabo `:5434` — crypto_signals PRIMARY (separate cluster, **not** JR-Hermes-VPS-owned)
 
