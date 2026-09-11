@@ -21,7 +21,7 @@ and doc-sourced (`docs/VPS_CONNECTIVITY_REFERENCE.md`) — each is labeled.
 
 | Layer | Config | Verified how |
 |---|---|---|
-| Cloud network firewall (`firewall-1`, Hetzner Cloud console) | 5 inbound rules: ICMP, `80/tcp`, `443/tcp`, `41641/udp`, `52222/tcp`. No `22/tcp` rule at all — the cloud firewall itself never lets port 22 traffic reach the host from the internet. | **Doc-sourced only** (`VPS_CONNECTIVITY_REFERENCE.md` §13.2, dated S28) — no `hcloud` CLI or API token exists on the host itself (checked this session), so this could not be independently re-verified live. Recommend a 2-minute console check before relying on this for a decision. |
+| Cloud network firewall (`firewall-1`, Hetzner Cloud console) | "Fully applied", 1 resource, **5 inbound rules**: Ping (ICMP, any IPv4), `80/tcp` (any IPv4+IPv6), `443/tcp` (any IPv4+IPv6), Tailscale UDP `41641` (any IPv4+IPv6), `52222/tcp` (any IPv4+IPv6). No `22/tcp` rule at all. | **Console screenshot confirmed by user, 2026-09-11** — matches the doc's S28 claim and this session's own empirical probe exactly. **New detail: `80`/`443` are "Any IPv4/Any IPv6" at this layer — the Cloudflare-CIDR restriction exists only in UFW, not here.** If UFW were ever flushed/disabled, the cloud firewall alone would let the whole internet reach nginx on `80`/`443` (it still would not reach anything else — `22`/`8000`/`8003`/`5432` have no cloud-firewall rule regardless of UFW state). |
 | Host firewall (UFW) | `:22` — no explicit allow rule at all (relies on the `tailscale0`-interface catch-all, not a `:22`-specific rule); `:52222` — explicit `ALLOW IN` on both IPv4 and IPv6, tagged "S27 public SSH fallback". | ✅ Live, `ufw status verbose`, this session. |
 | Socket bind (the actual OS-level listener) | `:22` → `100.97.62.7` + `127.0.0.1` + `[::1]` only (no `0.0.0.0`/`[::]`). `:52222` → `0.0.0.0` + `[::]`. | ✅ Live, `ss -tlnpe`, this session (this is the S22 `ssh.socket.d/20-jr-bind-scope.conf` change). |
 | Auth | key-only, `fail2ban` jail `sshd` watching `_SYSTEMD_UNIT=ssh.service` (the S26 fix — the pre-S26 filter watched the wrong systemd unit and could never ban), 0 banned, 0 failures/recent. | ✅ Live, `fail2ban-client status sshd`, this session. |
@@ -131,6 +131,7 @@ console access.**
 | H6 | Auth-anomaly monitoring folded into the existing Tier 3/4 observability stack (this project already has `hermes_vps_guardrail.py` / `hermes_vps_escalation_check.py`) — a new check counting recent SSH auth failures per source could feed `findings_log` the same way | Natural fit, low effort, this project owns the mechanism | Clevious VPS would need its own equivalent hook, or feed Hetzner's if a cross-host pattern already exists |
 | H7 | Document the *shape* (not just the numbers) as a binding convention once agreed — add a short rule to `HERMES_PLATFORM_STANDARD.md` or a new cross-project doc: "SSH: Tailscale-only admin port never shares a listener with the public fallback port, on any host" | Codify here or workspace-root | Same document, shared |
 | H8 | **New (S22 firewall re-audit):** `nginx :8000` and Ingestor's `:8003` both bind `0.0.0.0` with **no OS-level restriction** — the exact same fragility class `:22` had before B3. Currently safe only because UFW has no allow rule for either (confirmed live: no rule in `ufw status`, and an external probe from off-host to the public IP found both closed). Consider binding `nginx`'s internal-only listener to `127.0.0.1:8000` (its own doc description says it's reached by `cloudflared` over loopback only — the bind should say so too, not just the firewall) | Ours — low priority, not urgent (empirically blocked today) | n/a (Ingestor owns `:8003`'s bind — would need their input if that listener is touched) |
+| H9 | **New (S22, user-confirmed console screenshot):** the Cloudflare-CIDR restriction on `80`/`443` exists only in UFW — the Hetzner Cloud firewall allows both from "Any IPv4/Any IPv6". A UFW failure would expose nginx to the raw internet (not to `22`/`8000`/`8003`/`5432` — those have no cloud-firewall rule either way). Optional: nginx-level client-IP validation as a third layer. | Ours — low priority, no incident driving it | n/a |
 
 ### Firewall re-audit this session (2026-09-11)
 
@@ -142,15 +143,26 @@ console access.**
 - **Empirical external probe** (workstation → `46.225.14.26`, bypassing
   Tailscale): `22`/`8000`/`8002`/`5432` closed, `80`/`443` filtered (correct
   — non-Cloudflare source), `52222` open. Matches the documented perimeter.
-- **Cloud/network firewall**: still not independently verifiable from this
-  session — no `hcloud` CLI or API token found anywhere in this
-  workstation's credential stores. The empirical probe proves the *net*
-  effect is correct; it can't confirm the cloud firewall's rule list
-  specifically matches the doc's claimed 5 rules. Recommend a manual
-  console check to close this loop fully.
+- **Cloud/network firewall**: confirmed via a console screenshot from the
+  user (2026-09-11) — `firewall-1`, 5 rules, exactly matching the doc and
+  the empirical probe. **New detail this closes in**: `80`/`443` are open
+  to "Any IPv4/Any IPv6" at this layer — the Cloudflare-only restriction is
+  UFW-only, not double-enforced at the cloud firewall. Reasonable design
+  (Cloudflare's CIDR list is easier to keep current in UFW than round-
+  tripping the console) but means **UFW alone is what keeps non-Cloudflare
+  traffic off nginx** — no redundancy at that specific control.
 - **New finding H8** (above): `:8000`/`:8003` OS-socket exposure, UFW-only
   protection, no defense-in-depth. Not urgent, added as a hardening
   candidate.
+- **New finding H9**: the Cloudflare-CIDR restriction on `80`/`443` exists
+  in exactly one layer (UFW). A UFW failure/flush would not expose `22`,
+  `8000`, `8003`, or `5432` (the cloud firewall still has no rule for
+  those), but it would expose nginx to the raw internet on `80`/`443`
+  instead of Cloudflare-only. Consider whether nginx itself should also
+  validate the Cloudflare `CF-Connecting-IP`/`X-Forwarded-For` chain or a
+  real client-IP allowlist as a third layer — optional, not urgent given
+  UFW's own reliability track record this session (0 unexpected passes in
+  the block log, default-deny confirmed).
 
 ---
 

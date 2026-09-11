@@ -60,6 +60,26 @@ identical port (`:2222`) for both paths is the real asymmetry. Recommended
 Contabo be hardened to match Hetzner's shape, not the reverse. Nothing
 applied — proposal only, Contabo section is Clevious VPS's to execute.
 
+**Cloud/network firewall verified (user-provided console screenshot,
+2026-09-11):** `firewall-1`, "Fully applied," exactly 5 rules — Ping/ICMP,
+`80/tcp`, `443/tcp`, Tailscale UDP `41641`, `52222/tcp`, all "Any
+IPv4/IPv6", no `22/tcp` rule. Matches the doc and this session's own
+external probe exactly — closes the one gap the plan doc had flagged as
+unverifiable (no `hcloud` CLI/token on this workstation). **New detail
+(H9):** `80`/`443` are unrestricted at this layer — the Cloudflare-CIDR
+narrowing exists only in UFW, so UFW alone is what keeps non-Cloudflare
+traffic off nginx; a UFW failure wouldn't expose `22`/`8000`/`8003`/`5432`
+(no cloud-firewall rule for those either way) but would expose nginx
+itself. Low-priority hardening candidate, not an incident.
+
+**Backup-reconciliation follow-up + `HERMES_PLATFORM_STANDARD.md` update:**
+per user direction, added a new binding rule to §3 R3 (workspace root,
+synced to `/opt/HERMES_PLATFORM_STANDARD.md`, verified byte-identical) —
+GM must own a periodic reconciliation check (every live DB vs. every
+enrollment list) so a missed backup opt-in like A1/A3 can't recur silently;
+detect-and-report only, doesn't change who decides retention. Follow-up
+note appended to the A1/A3 cross-project notice pointing GM at the new rule.
+
 ---
 
 ## Quick resume for next session (S23)
