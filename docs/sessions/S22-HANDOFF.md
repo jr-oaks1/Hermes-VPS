@@ -116,7 +116,7 @@ the host **we** own outright.
 ## 5. Commits (all on `main`, pushed, deploy clone synced)
 
 ```
-<to be filled after commit>
+6a2071d S22: drop orphaned crypto_platform role (B8) + sshd bind-scope hardening (B3)
 ```
 
 ## 6. Pendings for S23 — all external
