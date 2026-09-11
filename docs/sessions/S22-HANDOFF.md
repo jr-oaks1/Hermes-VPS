@@ -6,15 +6,19 @@ cross-project pending for replies, confirm host health.
 **Numbering:** verified against `docs/sessions/` on disk (newest was
 `S21-HANDOFF.md`) → this session is **S22**. **Next handoff = S23.**
 
-**Status:** 🟢 DONE (B8/B3 close) → 🟡 **continued same session**: a follow-up
-deep forensic audit, a full doc audit of `VPS_CONNECTIVITY_REFERENCE.md`, a
-live confirmation of the VPS/DB backup setup, an SSH direct-route check
-(Hetzner vs. Contabo), and a drafted SSH-port-alignment + hardening plan —
-all at the user's request, same conversation, so still **S22** per the
-session-numbering rule. Host `running`, 0 failed units, 0 open/in_progress
-findings, replication `streaming/async/0` (424-byte lag), disk 46-47%,
-`deploy_guardrail.sh` 9/9. `/opt/hermes-vps` deploy clone synced through
-this session's final commit.
+**Status:** 🟢 CLOSED OUT. Sequence this session: B8/B3 close → deep forensic
+audit → full doc audit of `VPS_CONNECTIVITY_REFERENCE.md` → live confirmation
+of the VPS/DB backup setup → SSH direct-route check (Hetzner vs. Contabo) →
+SSH-port-alignment + hardening plan drafted → live firewall re-audit (UFW +
+Hetzner Cloud console, user-confirmed) → `HERMES_PLATFORM_STANDARD.md` R3
+backup-reconciliation rule added → Cloudflare API access set up
+workspace-wide for Claude Code (§9) — all one continuous conversation, so
+all **S22** per the session-numbering rule (confirmed with the user at
+close-out; `S21-HANDOFF.md` already existed as the real prior session).
+Final state: host `running`, 0 failed units, 0 open/in_progress findings,
+replication `streaming/async/0` (0-byte lag), disk 47%, `deploy_guardrail.sh`
+9/9. `/opt/hermes-vps` deploy clone synced to `1add706` (final commit).
+**Next handoff = S23.**
 
 ## 8. Continued this session: forensic audit, doc audit, backup confirmation, SSH plan
 
@@ -79,6 +83,48 @@ GM must own a periodic reconciliation check (every live DB vs. every
 enrollment list) so a missed backup opt-in like A1/A3 can't recur silently;
 detect-and-report only, doesn't change who decides retention. Follow-up
 note appended to the A1/A3 cross-project notice pointing GM at the new rule.
+
+## 9. Cloudflare access set up for Claude Code, workspace-wide
+
+User asked whether Claude Code has direct Cloudflare access; it didn't (no
+skill, no MCP connector in this session). Set up end-to-end:
+
+- **Plugin**: `claude plugin marketplace add cloudflare/skills` +
+  `claude plugin install cloudflare@cloudflare` → `Scope: user`, confirmed
+  via `claude plugin list` — available to every project's Claude Code
+  session after `/reload-plugins`, not just this one. 10 `cloudflare:*`
+  skills now loaded (product selection, Workers, Wrangler, Durable Objects,
+  Agents SDK, Zero Trust, etc.).
+- **Credential**: a scoped Cloudflare API Token created by the user
+  (dashboard), starting at Zone: `artek-studio.com` → DNS Write + Zone Read,
+  later widened same-session to Zone Settings Edit / Cache Purge / Page
+  Rules / App Edit across the whole account (all via the dashboard's
+  "Entire Account" policy editor — Cloudflare Tunnel Edit and User-scope
+  API-Tokens-Edit self-management were deliberately **not** added, to stop
+  compounding dashboard friction; can be added later on demand).
+- **IP-restricted to Hetzner's public IPv4 (`46.225.14.26`)** — confirmed
+  empirically (not assumed): calls from this workstation and even from
+  Hetzner-over-IPv6 both got Cloudflare error 9109 ("Cannot use the access
+  token from location"); only Hetzner-over-IPv4 passed. **Practical
+  consequence: any Cloudflare API call from any project's Claude Code
+  session must be relayed through Hetzner (SSH), not run from wherever that
+  session's shell happens to execute.**
+- Two dead-end token values were rejected (`Invalid API Token`, code 1000)
+  before the third worked — root-caused as the IP restriction, not
+  corruption (bytes verified clean at every step; the file just wasn't the
+  problem).
+- **Storage**: `C:\Users\jr250\OneDrive\Personales\AI Projects\cloudflare-credentials.env`
+  — deliberately **outside** `_credentials/`'s encrypted-vault tree, at the
+  user's explicit request, because that vault's own rule (passphrase never
+  reachable by an AI session) is incompatible with autonomous use. The IP
+  restriction is this credential's actual security boundary instead of
+  encryption-at-rest. Documented as an explicit, reasoned exception in
+  `_credentials/README.md` and two dated `_credentials/AUDIT_LOG.md`
+  entries (creation + same-day widening) — not silently worked around.
+- Verified live end state: `GET /zones` from Hetzner returns
+  `artek-studio.com` with `zone_settings:edit`, `dns_records:edit`,
+  `zone:edit`, `cache_purge:edit`, `app:edit` (plus reads) — confirmed
+  working, not just configured.
 
 ---
 
@@ -170,12 +216,12 @@ the host **we** own outright.
 | `systemctl is-system-running` | `running` |
 | `systemctl --failed` | empty |
 | Uptime / load | 4d19h, load 0.12/0.17/0.15 |
-| Disk `/` | 46% (39G free / 75G) — down slightly from S21's 47%, expected drift |
-| Replication | `streaming`/`async`, 424-byte lag (~0) |
+| Disk `/` | 47% (39G free / 75G) — flat vs. S21 close |
+| Replication | `streaming`/`async`, 0-byte lag (final check) |
 | `deploy/hermes-vps-{guardrail,escalation}` last run | `ExecMainStatus=0` both |
-| `deploy_guardrail.sh` | **9/9 assertions PASS** (re-run after the B8/B3 changes — unaffected, as expected) |
-| `findings_log` open/in_progress | **0 rows** |
-| `findings_log` total / newest | 40,137 rows (was 40,113 at S21 close; +24 over ~24h, matches the S18 steady-state emission rate) |
+| `deploy_guardrail.sh` | **9/9 assertions PASS** (re-run after the B8/B3 changes, and again at final close-out — unaffected both times, as expected) |
+| `findings_log` open/in_progress | **0 rows** (checked mid-session and at final close-out) |
+| `findings_log` total / newest | 40,141 rows at final check (was 40,113 at S21 close; +28 over the session, matches the S18 steady-state emission rate) |
 | netdata alarms | 0 non-CLEAR |
 | `certbot.timer` | active, last ran 2026-09-10 14:06 UTC |
 | `pg_backup.service` | `ExecMainStatus=0` |
@@ -184,8 +230,16 @@ the host **we** own outright.
 ## 5. Commits (all on `main`, pushed, deploy clone synced)
 
 ```
+1add706 S22: confirm Hetzner Cloud firewall-1 via user console screenshot (H9)
+5a2c0ab S22: note HERMES_PLATFORM_STANDARD.md R3 reconciliation-check codification in handoff
+4691cd5 S22: firewall re-audit findings (H8) + backup-reconciliation follow-up note
+6568c36 S22: write A1/A3 backup-enrollment notice + SSH-hardening proposal to Clevious VPS
+f6a9cec S22 continued: forensic audit + doc audit + backup confirmation + SSH port alignment plan
+d31ff25 S22: fill in commit hash in handoff
 6a2071d S22: drop orphaned crypto_platform role (B8) + sshd bind-scope hardening (B3)
 ```
+(Cloudflare setup in §9 touched no files in this repo — the credential and
+plugin live at the workspace level, outside any single project's git tree.)
 
 ## 6. Pendings for S23
 
@@ -194,6 +248,7 @@ the host **we** own outright.
 |---|---|---|
 | C1 | **SSH port alignment + hardening plan** — `docs/SSH_PORT_ALIGNMENT_AND_HARDENING_PLAN.md` (drafted this session, post-handoff). Hetzner is already in the recommended target shape (no action needed); the Hetzner-side follow-up items are H3 (`sshd_config` `PasswordAuthentication`/`PermitRootLogin` live re-check — not yet done), H4 (`ufw limit` on `:52222`), H6 (fold SSH auth-anomaly counts into the Tier 3/4 guardrail). None urgent — current 3-layer posture on `:22`/`:52222` is already sound. | Proposal written, no execution yet — needs a go-ahead per item. |
 | C2 | **Universal 3-2-1 backup enrollment** — extend the *existing* nightly `pg_backup.sh` + `gdrive_sync.sh` pipeline (no new mechanism) to the 3 databases currently short a leg: `hermes_ingestor_log` (0 of 3 legs — this is A1, unchanged), `hermes_vps_log` and `vps_orchestrator_findings` (2 of 3 — missing only the Google Drive cold-storage leg). All three are small; assessed this session as genuinely low-cost to close, not "too much." The `DATABASES=` edit is ours to apply on the owning project's go-ahead (A1's existing pattern); the `gdrive_sync.sh` DB-list edit lives on Contabo — not ours to make. **Structural fix codified:** `HERMES_PLATFORM_STANDARD.md` §3 R3 now requires a GM-owned periodic reconciliation check (every DB vs. every enrollment list) so a missed opt-in like A1/A3 can't sit unnoticed again — synced to both copies (workspace root + `/opt/HERMES_PLATFORM_STANDARD.md`, byte-identical, 296 lines each, verified). | New this session — standard updated, notice sent, execution still pending on GM/Ingestor/Clevious VPS. |
+| C3 | **Cloudflare API access** — set up and working (§9), but only from Hetzner's IPv4 (the token's IP restriction). Optional follow-ups, none urgent: add Cloudflare Tunnel Edit + User-scope API-Tokens-Edit (self-management) if a task ever needs them; consider widening the IP allowlist if Cloudflare work should ever run from somewhere other than Hetzner. | Working as configured — no action required unless a specific task needs more. |
 
 ### Waiting on other projects
 | # | Item | Owner | Since |
@@ -228,8 +283,16 @@ gap is the right call over inventing a lighter-weight scheme for "small" DBs.
 ## 7. Interaction / numbering / ground-rule notes
 
 `#Interaction NN` opener + hallucination-zone flagging observed throughout
-S22. Session = **S22** (disk-verified against `docs/sessions/`). Next = **S23**.
+S22. **At close-out the user asked for this handoff as "S21"** — surfaced
+the conflict per `SESSION_NUMBERING_STANDARD.md` (`S21-HANDOFF.md` already
+exists as the real S21 session; naming this one S21 would collide/
+overwrite) rather than silently complying either way. User confirmed **S22**
+is correct. Session = **S22** (disk-verified against `docs/sessions/` at
+start, re-confirmed at close). **Next = S23.**
+
 **Smoke-test binding rule** honoured for both B8 (BEGIN/ROLLBACK dry-run
 before the real DROP) and B3 (staged file + `systemd-analyze verify` +
-armed auto-revert + dual-path confirmation before disarming). No auto-mode
-block encountered this session — SSH worked directly throughout.
+armed auto-revert + dual-path confirmation before disarming). **Auto-mode
+block protocol** used once (editing `_credentials/README.md` — a plain
+"disable auto mode" ping, no manual-workaround menu; user complied, edit
+completed). SSH otherwise worked directly throughout, no other blocks.
