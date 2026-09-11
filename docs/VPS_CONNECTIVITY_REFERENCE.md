@@ -197,7 +197,7 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 | 8002/tcp | tailscale0 (`100.97.62.7`) | Any (Tailscale) | FastAPI orchestrator API (admin/monitoring only) |
 | 5432/tcp | 127.0.0.1 | localhost | PostgreSQL local |
 | 22/tcp | tailscale0 | Any (Tailscale) | SSH — primary path |
-| 52222/tcp | any (IPv4 **and** IPv6) | ALLOW (UFW + provider) | **SSH public fallback — LIVE since S28**, verified from two external sources. See §13.1 |
+| 52222/tcp | any (IPv4 **and** IPv6) | **LIMIT (UFW, since S23)** + ALLOW (provider) | **SSH public fallback — LIVE since S28**, verified from two external sources. See §13.1. **UFW rule changed `ALLOW`→`LIMIT` S23 (H4)** — blocks a source IP after 6 connection attempts in 30s, on top of fail2ban; connectivity re-verified after the change |
 | 41641/udp | any | any | Tailscale WireGuard handshake |
 | 51830/udp | eth0 | `195.26.247.212` (v4) + `2605:a140:2336:1707::/64` (v6) | **Static WireGuard `jr-wg0` — S29.** Peer-scoped, not open to the world |
 | All | **jr-wg0** | Any (tunnel) | **S29 — traffic *inside* the tunnel.** Without this rule the tunnel handshakes but nothing can traverse it; see §14.1 |
@@ -205,20 +205,23 @@ from="100.121.245.4,10.77.0.2" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKrbOlxk7MZNx
 
 > **Two firewalls, not one.** UFW is the host layer; the **Hetzner Cloud provider firewall
 > (`firewall-1`, id `10976526`, applied to server id `129955563`)** sits above it. A port
-> must be open in **both**. As of S28 the provider firewall has 5 inbound rules: ICMP,
-> `80/tcp`, `443/tcp`, `41641/udp`, `52222/tcp`, all "Any IPv4/IPv6", and no outbound rules
-> (all egress allowed — required by `cloudflared` and Tailscale). **Re-verified live
-> 2026-09-11 (S22/S23) — unchanged**, both via a user console screenshot and, as of S23, via
-> the Hetzner Cloud API directly (see §5 for the new credential — this was previously
-> console-only, so past sessions edited it by hand).
+> must be open in **both**. **As of S23 (2026-09-11) the provider firewall's `80/tcp` and
+> `443/tcp` rules are narrowed to Cloudflare's published CIDR ranges (22 total, matching
+> UFW exactly)** — `41641/udp`, `52222/tcp`, and ICMP remain "Any IPv4/IPv6", unchanged.
+> No outbound rules (all egress allowed — required by `cloudflared` and Tailscale).
 >
-> ⚠️ **S28 (§13.2) explicitly considered and rejected narrowing 80/443 here to Cloudflare's
-> CIDR ranges to match UFW** — reasoning: ~29 hand-maintained rules that Cloudflare
-> periodically revises, and a stale copy becomes a silent outage; UFW already enforces the
-> restriction, so a second drifting copy is worse than one control point. **S22 re-raised the
-> same gap independently as finding H9** without cross-referencing this prior decision — if
-> H9 is ever acted on, read this note first; the S28 reasoning may still hold (nothing about
-> Cloudflare's rate of IP-range change has been re-checked since).
+> ⚠️ **This reverses S28 §13.2**, which explicitly considered and rejected this exact
+> narrowing — reasoning: a ~29-rule hand-maintained CIDR list drifts from Cloudflare's
+> periodic updates silently, and a second drifting copy is worse than one control point
+> (UFW). **S23's mitigation, not a dismissal of that reasoning:** the Tier 3 guardrail now
+> runs `check_cloud_firewall_cidr_drift()` every 5 minutes — it re-fetches Cloudflare's live
+> list (`https://api.cloudflare.com/client/v4/ips`) and diffs it against whatever the cloud
+> firewall currently allows on 80/443, emitting WARNING the moment they disagree. The thing
+> S28 was actually worried about (silent drift) is now a monitored, visible condition
+> instead of an avoided one. If this check is ever removed or found broken, the S28
+> reasoning fully applies again and the narrowing should be reverted to "Any IPv4/IPv6".
+> Applied via the Hetzner Cloud API (see §5) — verified live: site 200, netdata 302
+> (expected Cloudflare Access redirect), both SSH paths reachable, 0 failed units.
 
 > Docker bridge 5432 rules removed 2026-06-26 after crypto-signals containers migrated to Contabo.
 > Docker daemon **actually stopped 2026-07-21** (S43's "disabled" claim was stale/inaccurate — it
