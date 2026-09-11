@@ -130,6 +130,27 @@ console access.**
 | H5 | SSH key rotation cadence — no expiry policy currently documented for either host's admin keys | Open question, no current policy | Same |
 | H6 | Auth-anomaly monitoring folded into the existing Tier 3/4 observability stack (this project already has `hermes_vps_guardrail.py` / `hermes_vps_escalation_check.py`) — a new check counting recent SSH auth failures per source could feed `findings_log` the same way | Natural fit, low effort, this project owns the mechanism | Clevious VPS would need its own equivalent hook, or feed Hetzner's if a cross-host pattern already exists |
 | H7 | Document the *shape* (not just the numbers) as a binding convention once agreed — add a short rule to `HERMES_PLATFORM_STANDARD.md` or a new cross-project doc: "SSH: Tailscale-only admin port never shares a listener with the public fallback port, on any host" | Codify here or workspace-root | Same document, shared |
+| H8 | **New (S22 firewall re-audit):** `nginx :8000` and Ingestor's `:8003` both bind `0.0.0.0` with **no OS-level restriction** — the exact same fragility class `:22` had before B3. Currently safe only because UFW has no allow rule for either (confirmed live: no rule in `ufw status`, and an external probe from off-host to the public IP found both closed). Consider binding `nginx`'s internal-only listener to `127.0.0.1:8000` (its own doc description says it's reached by `cloudflared` over loopback only — the bind should say so too, not just the firewall) | Ours — low priority, not urgent (empirically blocked today) | n/a (Ingestor owns `:8003`'s bind — would need their input if that listener is touched) |
+
+### Firewall re-audit this session (2026-09-11)
+
+- **UFW**: fresh full pull, 56 rules, all attributable to Cloudflare/Tailscale/
+  WireGuard/known fallbacks; raw `iptables ufw-user-input` chain matches
+  `ufw status` exactly (no shadow rules); default policies confirmed
+  `INPUT=DROP`/`OUTPUT=ACCEPT`/`FORWARD=DROP`; live block log shows ordinary
+  internet background-scan noise, correctly dropped.
+- **Empirical external probe** (workstation → `46.225.14.26`, bypassing
+  Tailscale): `22`/`8000`/`8002`/`5432` closed, `80`/`443` filtered (correct
+  — non-Cloudflare source), `52222` open. Matches the documented perimeter.
+- **Cloud/network firewall**: still not independently verifiable from this
+  session — no `hcloud` CLI or API token found anywhere in this
+  workstation's credential stores. The empirical probe proves the *net*
+  effect is correct; it can't confirm the cloud firewall's rule list
+  specifically matches the doc's claimed 5 rules. Recommend a manual
+  console check to close this loop fully.
+- **New finding H8** (above): `:8000`/`:8003` OS-socket exposure, UFW-only
+  protection, no defense-in-depth. Not urgent, added as a hardening
+  candidate.
 
 ---
 

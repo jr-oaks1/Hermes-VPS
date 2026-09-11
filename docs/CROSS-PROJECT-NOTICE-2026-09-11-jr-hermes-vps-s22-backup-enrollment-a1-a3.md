@@ -71,6 +71,36 @@ DBs.
 
 ---
 
+## Follow-up (same day, 2026-09-11): structural recommendation, now binding
+
+Discussed with the user why A1/A3 could sit unnoticed at all: the opt-in
+registration model (R3 — "add your DB to `DATABASES=`, nothing else") has no
+counterpart that catches a **missed** opt-in. Both findings above are
+exactly that failure mode, not a one-off.
+
+**Added as a new binding rule in `HERMES_PLATFORM_STANDARD.md` §3 R3** (workspace
+root, 2026-09-11): a periodic reconciliation check, **owned by GM**
+(`JR_VPS_Orchestrators`), that enumerates every database actually present on
+every cluster (Hetzner `:5432`, Contabo `:5432`/`:5434`, Hetzner `16/orch`
+`:5435`) and diffs it against `DATABASES=` in `/etc/pg_backup.conf` and
+`gdrive_sync.sh`/`gdrive_thin.sh`'s `DBS=(...)` array — raising a finding for
+anything unlisted. This does **not** give GM authority to enroll a database
+unilaterally; it only detects and reports. The owning project still makes
+the retention call, exactly as R3 already works — this closes the "nobody
+noticed" gap, not the "who decides" question.
+
+We deliberately did **not** recommend decentralizing the backup mechanism
+itself (e.g. each VPS-owning project running its own separate script) —
+that would recreate the exact script divergence Phase 8 was built to
+eliminate. The shared script stays shared; only the missing-enrollment
+detection is new.
+
+**Ask (GM):** please pick up this reconciliation check as a small addition
+to the existing collector/audit tooling, similar in shape to
+`BackupDriftCheck` — a boring, high-value invariant, not new infrastructure.
+
+---
+
 *Raised by the S22 backup-setup confirmation — see
 `docs/sessions/S22-HANDOFF.md` §8 and §6 "Backup design note", findings A1
-(restated) and A3 (new).*
+(restated) and A3 (new), plus the follow-up structural recommendation above.*
