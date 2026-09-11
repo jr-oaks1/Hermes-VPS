@@ -6,11 +6,59 @@ cross-project pending for replies, confirm host health.
 **Numbering:** verified against `docs/sessions/` on disk (newest was
 `S21-HANDOFF.md`) → this session is **S22**. **Next handoff = S23.**
 
-**Status:** 🟢 DONE. **No JR-Hermes-VPS-owned pending remains open** (B8 and B3,
-the only two, are both closed this session). Host `running`, 0 failed units,
-0 open/in_progress findings, replication `streaming/async/0` (424-byte lag),
-disk 46%, `deploy_guardrail.sh` 9/9. `/opt/hermes-vps` deploy clone at S21 HEAD
-(`d836771`) prior to this session's commits.
+**Status:** 🟢 DONE (B8/B3 close) → 🟡 **continued same session**: a follow-up
+deep forensic audit, a full doc audit of `VPS_CONNECTIVITY_REFERENCE.md`, a
+live confirmation of the VPS/DB backup setup, an SSH direct-route check
+(Hetzner vs. Contabo), and a drafted SSH-port-alignment + hardening plan —
+all at the user's request, same conversation, so still **S22** per the
+session-numbering rule. Host `running`, 0 failed units, 0 open/in_progress
+findings, replication `streaming/async/0` (424-byte lag), disk 46-47%,
+`deploy_guardrail.sh` 9/9. `/opt/hermes-vps` deploy clone synced through
+this session's final commit.
+
+## 8. Continued this session: forensic audit, doc audit, backup confirmation, SSH plan
+
+**Forensic audit (read-only, live):** no CRITICAL/HIGH. All green — system,
+replication (996 MB `:5435` orch DB confirmed via live size query), UFW,
+fail2ban (jail correctly watches `_SYSTEMD_UNIT=ssh.service`, 0 banned),
+Tailscale, unattended-upgrades, netdata (0 non-clear of 102 alarms), TLS
+(valid to 2026-10-19).
+
+**Doc audit of `docs/VPS_CONNECTIVITY_REFERENCE.md`:** §5 (roles/databases,
+`pg_hba`) — accurate, matches live exactly. §4 (firewall ports) — accurate
+but doesn't yet note the S22 `:22` bind-scope change (cosmetic gap). **§7
+"Active Services by Node" is stale and self-contradicts the rest of the
+doc** — lists `hermes_v2.service` as active (live: `disabled`/`inactive`,
+decommissioned) and `crypto-health-monitor.service` as a live alerting
+service (**that unit no longer exists on the host at all**); its backup
+description ("2 local dumps kept... `ALERT_ENV` → `/opt/crypto-health-monitor/.env`")
+predates the Phase 8 convergence (live: `LOCAL_RETENTION_COUNT=7`,
+`ALERT_ENV=/root/.hermes_vps/.env`). **Not fixed this session** — flagged as
+a finding, rewrite needs its own pass.
+
+**Backup setup confirmed live** (`/etc/pg_backup.conf` + `gdrive:vps-backups/`):
+full 3-2-1 (local + Contabo off-site + Google Drive) genuinely holds for
+`hermes_v2`, `crypto_signals`, `clevious_vps_log`, `hermes_v2_log`,
+`vps_orchestrator`. Gaps found: `hermes_ingestor_log` has **zero** coverage
+(A1, unchanged); `hermes_vps_log` and `vps_orchestrator_findings` have
+local+off-site but **no Drive leg** (new — **A3**). One restore-test ever
+run on Hetzner (`hermes_v2`, 2026-09-02, PASS, 14,509 tables) — none for any
+other DB. See §6 "Backup design note" for the enrollment recommendation.
+
+**SSH direct-route check:** confirmed live, both hosts have two independent
+routes each (Hetzner: Tailscale `:22` + public `:52222`; Contabo: Tailscale
+`:2222` + public `:2222`) — neither host depends on the other to be
+reachable. The one documented "jump via Contabo to reach Hetzner" case
+(`JR Hermes Ingestor/docs/sessions/S10-HANDOFF.md`) was a **failed**
+last-resort attempt during a real historical outage, not a working or
+relied-upon route.
+
+**SSH port alignment + hardening plan drafted:** `docs/SSH_PORT_ALIGNMENT_AND_HARDENING_PLAN.md`.
+Key finding: Hetzner's `:22`/`:52222` split (private Tailscale-only +
+separate public fallback) is the *safer* shape of the two hosts — Contabo's
+identical port (`:2222`) for both paths is the real asymmetry. Recommended
+Contabo be hardened to match Hetzner's shape, not the reverse. Nothing
+applied — proposal only, Contabo section is Clevious VPS's to execute.
 
 ---
 
@@ -119,23 +167,35 @@ the host **we** own outright.
 6a2071d S22: drop orphaned crypto_platform role (B8) + sshd bind-scope hardening (B3)
 ```
 
-## 6. Pendings for S23 — all external
+## 6. Pendings for S23
 
 ### JR Hermes VPS owned
 | # | Item | State |
 |---|---|---|
-| — | **Nothing broken. Nothing owed.** B8 and B3 (the only two owned items from S21) are both closed. | — |
+| C1 | **SSH port alignment + hardening plan** — `docs/SSH_PORT_ALIGNMENT_AND_HARDENING_PLAN.md` (drafted this session, post-handoff). Hetzner is already in the recommended target shape (no action needed); the Hetzner-side follow-up items are H3 (`sshd_config` `PasswordAuthentication`/`PermitRootLogin` live re-check — not yet done), H4 (`ufw limit` on `:52222`), H6 (fold SSH auth-anomaly counts into the Tier 3/4 guardrail). None urgent — current 3-layer posture on `:22`/`:52222` is already sound. | Proposal written, no execution yet — needs a go-ahead per item. |
+| C2 | **Universal 3-2-1 backup enrollment** — extend the *existing* nightly `pg_backup.sh` + `gdrive_sync.sh` pipeline (no new mechanism) to the 3 databases currently short a leg: `hermes_ingestor_log` (0 of 3 legs — this is A1, unchanged), `hermes_vps_log` and `vps_orchestrator_findings` (2 of 3 — missing only the Google Drive cold-storage leg). All three are small; assessed this session as genuinely low-cost to close, not "too much." The `DATABASES=` edit is ours to apply on the owning project's go-ahead (A1's existing pattern); the `gdrive_sync.sh` DB-list edit lives on Contabo — not ours to make. | New this session — see §"Backup design note" below. |
 
 ### Waiting on other projects
 | # | Item | Owner | Since |
 |---|---|---|---|
-| A1 | Register `hermes_ingestor_log` in the backup job | Ingestor + GM | S21 |
+| A1 | Register `hermes_ingestor_log` in the backup job (now also tracked under C2) | Ingestor + GM | S21 |
 | A2 | Verify `:5435` `vps_orchestrator` dump is full + off-sited | GM | S21 |
+| A3 | Add `hermes_vps_log` + `vps_orchestrator_findings` to `gdrive_sync.sh`'s DB list (now also tracked under C2) | GM / Clevious VPS (owns `gdrive_sync.sh` on Contabo) | S22 |
+| C1-Contabo | Contabo SSH port split (private Tailscale-only port + kept `2222` as public-only) per `docs/SSH_PORT_ALIGNMENT_AND_HARDENING_PLAN.md` §5 | Clevious VPS | S22 |
 | X1 | Bulk-triage `vps_orchestrator_findings` for mirrored S19b storm CRITICALs, close S41 escalation | GM | S19b |
 | X3 | `/opt/hermes_v2` teardown + stale `FRED_API_KEY` | Ingestor | escalated S16 |
 | P3 | GM commit of the S19b reply notice (currently untracked in their repo) | GM | S19b |
 | Y3/B7 | Cross-host TimescaleDB pkg divergence — latent at next PG restart | GM (Ingestor remediates) | escalated S19 |
 | Y4 | Clevious S50 R5 naming confirmation (cosmetic; unit name already self-corrected in their docs S57) | Clevious VPS | S16 |
+
+### Backup design note (this session)
+Asked whether full 3-2-1 for every database is overkill vs. a simpler
+"local + cold-storage rotation" scheme. Assessment: **don't simplify away
+from 3-2-1** — the local+off-site+Drive pipeline already exists and runs
+nightly; the only gap is 3 small findings/log DBs not enrolled in all its
+legs (table above). Enrolling them is a few config-list lines in tooling
+that already runs, not new infrastructure — genuinely cheap, so closing the
+gap is the right call over inventing a lighter-weight scheme for "small" DBs.
 
 ### Closed this session (were open at S21 close)
 - **B8** `crypto_platform` orphan role — dropped, verified gone, doc updated. See §1.
